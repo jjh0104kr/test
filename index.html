@@ -1,0 +1,2138 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>피란의 기억을 잇다</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Serif+KR:wght@400;600;700&display=swap">
+<style>
+  :root {
+    --page: #d8d2c3;
+    --cream: #f1e7cc;
+    --ink: #2a2218;
+    --paper: #eadfc0;
+    --paper-2: #d6c294;
+    --brass: #b8924a;
+    --brass-hi: #f0cf7a;
+    --line: #231b13;
+    --serif: "Noto Serif KR", "Gowun Batang", "Nanum Myeongjo", "Batang", "Apple SD Gothic Neo", serif;
+    --book: "Gowun Batang", "Noto Serif KR", "Nanum Myeongjo", "Batang", "Apple SD Gothic Neo", serif;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --page: #0b0f15; }
+  }
+  :root[data-theme="dark"] { --page: #0b0f15; }
+  html { height: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0; height: 100%; overflow: hidden;
+    background: var(--page);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--book);
+    -webkit-user-select: none; user-select: none;
+  }
+  button { font: inherit; color: inherit; }
+  body { touch-action: manipulation; }
+
+  #stage { position: relative; width: 1280px; height: 720px; flex: none; overflow: hidden; background: #000; transform-origin: center center; }
+  .screen { position: absolute; inset: 0; visibility: hidden; opacity: 0; }
+  .screen.active { visibility: visible; opacity: 1; }
+  #fader { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity .32s ease; z-index: 50; }
+  #fader.on { opacity: 1; pointer-events: auto; }
+  .bg, .bg svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+  /* ── 버튼: 대화창 액자 느낌의 양피지 판 ── */
+  .plate {
+    --cut: 16px;
+    position: relative; border: 0; padding: 0; cursor: pointer; background: var(--line);
+    clip-path: polygon(var(--cut) 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, var(--cut) 100%, 0 calc(100% - var(--cut)), 0 var(--cut));
+    transition: transform .15s ease;
+  }
+  .plate::before, .plate::after { content: ""; position: absolute; }
+  .plate::before {
+    inset: 3px; background: var(--brass);
+    clip-path: polygon(13px 0, calc(100% - 13px) 0, 100% 13px, 100% calc(100% - 13px), calc(100% - 13px) 100%, 13px 100%, 0 calc(100% - 13px), 0 13px);
+  }
+  .plate::after {
+    inset: 6px; background: linear-gradient(#f0e5c6, var(--paper-2));
+    clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+  }
+  .plate > * { position: relative; z-index: 1; }
+  .plate:hover:not(:disabled), .plate:focus-visible { transform: translateY(-3px); }
+  .plate:hover:not(:disabled)::before, .plate:focus-visible::before { background: var(--brass-hi); }
+  .plate:focus-visible { outline: none; }
+  .plate:disabled { cursor: not-allowed; filter: grayscale(.85) brightness(.66); }
+
+  /* ── 타이틀: 일러스트 위에 버튼 강조 효과만 얹음 ── */
+  .title-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  .title-art.blur { filter: blur(8px) brightness(.55); transform: scale(1.8); transform-origin: 10% 100%; }
+  .tb { position: absolute; padding: 0; border: 0; background: none; cursor: pointer; filter: drop-shadow(0 0 0 rgba(255,205,110,0)); transition: filter .22s ease, transform .18s ease; }
+  .school-logo { position: absolute; height: auto; pointer-events: none; filter: drop-shadow(0 2px 5px rgba(0,0,0,.45)); }
+  .tb .fill, .tb .sheen { position: absolute; inset: 0; pointer-events: none; clip-path: polygon(3.8% 0, 96.2% 0, 100% 17.5%, 100% 82.5%, 96.2% 100%, 3.8% 100%, 0 82.5%, 0 17.5%); }
+  .tb .fill { background: radial-gradient(ellipse at 50% 50%, rgba(255,228,165,.15), rgba(255,206,120,.05) 72%); opacity: 0; transition: opacity .2s ease; }
+  .tb .sheen::before { content: ""; position: absolute; top: 0; bottom: 0; left: -40%; width: 34%; background: linear-gradient(100deg, transparent, rgba(255,242,205,.6), transparent); transform: skewX(-18deg); opacity: 0; }
+  .tb .ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; opacity: 0; transition: opacity .2s ease; }
+  .tb .ring polygon { fill: none; stroke: #ffe3a3; stroke-width: 2.6; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+  .tb:hover, .tb:focus-visible { filter: drop-shadow(0 0 3px rgba(255,225,150,.95)) drop-shadow(0 0 14px rgba(255,190,90,.75)); transform: scale(1.02); outline: none; }
+  .tb:hover .fill, .tb:focus-visible .fill, .tb:hover .ring, .tb:focus-visible .ring { opacity: 1; }
+  .tb:hover .sheen::before, .tb:focus-visible .sheen::before { animation: sheen .8s ease-out 1 forwards; }
+  .tb:active { transform: scale(.99); }
+  @keyframes sheen { 0% { left: -40%; opacity: 1; } 100% { left: 110%; opacity: 1; } }
+  .tb.sm .fill, .tb.sm .sheen { clip-path: polygon(5.2% 0, 94.8% 0, 100% 17.4%, 100% 82.6%, 94.8% 100%, 5.2% 100%, 0 82.6%, 0 17.4%); }
+  #stage.on-credits .mute { top: 52px; }   /* 제작자 그림 오른쪽 위 글씨를 가리지 않게 */
+  .toast { position: absolute; left: 50%; bottom: 44px; transform: translateX(-50%); padding: 12px 28px; background: rgba(20,16,12,.9); color: var(--cream); border: 1px solid var(--brass); border-radius: 4px; font: 400 22px var(--book); letter-spacing: .06em; opacity: 0; transition: opacity .25s ease; pointer-events: none; z-index: 40; }
+  .toast.show { opacity: 1; }
+
+  /* ── 챕터 선택 ── */
+  .shade-all { position: absolute; inset: 0; background: rgba(6,9,14,.5); }
+  .ch-head { position: absolute; left: 0; right: 0; top: 92px; text-align: center; }
+  .ch-head h2 { margin: 0; font: 700 50px/1.2 var(--serif); letter-spacing: .16em; color: var(--cream); }
+  .ch-head i { display: block; width: 96px; height: 3px; background: var(--brass); margin: 22px auto 0; }
+  .ch-grid { position: absolute; left: 50%; top: 250px; transform: translateX(-50%); display: grid; grid-template-columns: repeat(3, 320px); gap: 30px 32px; }
+  .card { height: 152px; color: var(--ink); text-align: center; }
+  .card .in { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; height: 100%; }
+  .card b { font: 700 40px/1 var(--serif); letter-spacing: .08em; }
+  .card small { display: inline-flex; align-items: center; gap: 6px; font: 400 19px/1 var(--book); letter-spacing: .08em; color: #5b4a30; }
+  .card small svg { width: 15px; height: 15px; }
+  .back { position: absolute; left: 60px; bottom: 48px; background: none; border: 0; cursor: pointer; font: 400 24px var(--book); letter-spacing: .1em; color: var(--cream); padding: 10px 14px; border-radius: 4px; }
+  .back:hover, .back:focus-visible { color: var(--brass-hi); outline: none; text-decoration: underline; text-underline-offset: 8px; }
+
+  /* ── 대화 씬 ── */
+  #vn { background: #000; cursor: default; }
+  .scene { position: absolute; inset: 0; opacity: 0; transition: opacity .38s ease; }
+  #vn[data-view="room"] .scene { opacity: 1; }
+    .scene .vig { position: absolute; inset: 0; z-index: 1; background: linear-gradient(rgba(0,0,0,.26), rgba(0,0,0,.26)), radial-gradient(ellipse at 50% 42%, rgba(0,0,0,0) 40%, rgba(0,0,0,.5) 100%); }
+  .frozen { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity .38s ease; display: block; }
+  .frozen.now { transition: none; }
+  #vn[data-view="room"] .frozen, #vn[data-view="still"] .frozen { opacity: 1; }
+  .portrait { position: absolute; z-index: 2; bottom: 215px; height: 470px; transition: filter .28s ease, transform .28s ease; pointer-events: none; }
+  .portrait img { height: 100%; display: block; }
+  #pBoy { left: 120px; }
+  #pGrand { right: 120px; }
+  .portrait.dim { filter: brightness(.5) saturate(.72); transform: translateY(12px); }
+  .portrait.on { z-index: 3; }
+
+  .dialog { position: absolute; left: 50%; bottom: 18px; width: 1040px; transform: translateX(-50%); opacity: 0; transition: opacity .3s ease; z-index: 5; }
+  #vn[data-view="room"] .dialog, #vn[data-view="dark"] .dialog { opacity: 1; }
+  .dialog > img { width: 100%; display: block; }
+  .dialog .name { position: absolute; left: 9.1%; top: 15%; width: 21%; height: 14.4%; display: flex; align-items: center; justify-content: center; font: 700 26px var(--serif); letter-spacing: .16em; color: #f2e6c8; text-shadow: 0 1px 3px rgba(0,0,0,.7); white-space: nowrap; }
+  .dialog .body { position: absolute; left: 8.1%; top: 35.9%; width: 82.8%; height: 56.8%; font: 400 31px/1.56 var(--book); color: #33281c; white-space: pre-wrap; word-break: keep-all; overflow-wrap: break-word; }
+  .dialog .next { position: absolute; left: 93.3%; top: 80.1%; width: 3.65%; opacity: 0; }
+  .dialog .next img { width: 100%; display: block; }
+  .dialog .next.on { opacity: 1; animation: bob 1.1s ease-in-out infinite; }
+  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+
+  .ch { opacity: 0; }
+  .ch.on { opacity: 1; }
+
+  .narr { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .38s ease; z-index: 8; pointer-events: none; }
+  #vn[data-view="black"] .narr { opacity: 1; }
+  .narr [data-k] { display: none; }
+  .narr[data-kind="text"] [data-k="text"], .narr[data-kind="kw"] [data-k="kw"], .narr[data-kind="search"] [data-k="search"] { display: block; }
+  .narr-text { max-width: 920px; text-align: center; font: 400 38px/1.75 var(--serif); color: #e8dec6; white-space: pre-wrap; word-break: keep-all; overflow-wrap: break-word; }
+  .narr-next { position: absolute; left: 50%; bottom: 66px; width: 0; height: 0; margin-left: -11px; border-left: 11px solid transparent; border-right: 11px solid transparent; border-top: 15px solid #c9bb95; opacity: 0; }
+  .narr-next.on { opacity: .85; animation: bob 1.1s ease-in-out infinite; }
+
+  .kw { text-align: center; }
+  .kw-title { display: flex; align-items: center; justify-content: center; gap: 22px; font: 600 28px/1 var(--serif); letter-spacing: .5em; color: var(--brass-hi); margin-bottom: 54px; min-height: 28px; padding-left: .5em; }
+  .kw-title::before, .kw-title::after { content: ""; width: 84px; height: 2px; background: var(--brass); opacity: .8; }
+  .kw-list { display: flex; gap: 34px; justify-content: center; }
+  .kw-chip { --cut: 12px; position: relative; min-width: 210px; padding: 26px 40px; background: var(--line); opacity: 0; transition: opacity .4s ease; font: 700 44px/1 var(--serif); letter-spacing: .1em; color: var(--ink);
+    clip-path: polygon(var(--cut) 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, var(--cut) 100%, 0 calc(100% - var(--cut)), 0 var(--cut)); }
+  .kw-chip::before { content: ""; position: absolute; inset: 3px; background: linear-gradient(#f0e5c6, var(--paper-2)); border: 2px solid var(--brass);
+    clip-path: polygon(9px 0, calc(100% - 9px) 0, 100% 9px, 100% calc(100% - 9px), calc(100% - 9px) 100%, 9px 100%, 0 calc(100% - 9px), 0 9px); box-sizing: border-box; }
+  .kw-chip span { position: relative; }
+  .kw-chip.on { opacity: 1; }
+
+  .search-bar { display: flex; align-items: center; gap: 22px; width: 760px; height: 88px; padding: 0 36px; border-radius: 44px; background: #f2ecdd; box-shadow: 0 0 0 3px rgba(184,146,74,.55); }
+  .search-bar svg { width: 34px; height: 34px; flex: none; }
+  .search-text { font: 400 36px/1 "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; color: #26221c; white-space: pre; }
+  .caret { width: 2px; height: 40px; background: #26221c; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ── 필드 ── */
+  .mission { --c: 12px; position: absolute; left: 28px; top: 22px; width: 380px; background: var(--brass); opacity: 0; transition: opacity .3s ease; pointer-events: none; z-index: 5;
+    clip-path: polygon(var(--c) 0, calc(100% - var(--c)) 0, 100% var(--c), 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, var(--c) 100%, 0 calc(100% - var(--c)), 0 var(--c)); }
+  .mission.on { opacity: 1; }
+  .mission .in { margin: 2px; padding: 13px 20px 17px; background: linear-gradient(#231d15, #17130f);
+    clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px); }
+  .mission .tag { font: 700 15px/1 var(--serif); letter-spacing: .36em; color: var(--brass-hi); margin-bottom: 10px; }
+  .mission .txt { display: flex; gap: 11px; font: 400 20px/1.5 var(--book); color: var(--cream); word-break: keep-all; }
+  .mission .txt::before { content: ""; flex: none; width: 12px; height: 12px; margin-top: 8px; border: 2px solid var(--brass-hi); }
+  #field canvas { display: block; width: 1280px; height: 720px; }
+  #field canvas:focus { outline: none; }
+
+
+  /* ── 모바일 터치 버튼: 화면(무대) 바깥 기준으로 고정, 캐릭터가 서는 바닥선 아래에만 놓음 ── */
+  #touch { --sz: 72px; position: fixed; left: 0; right: 0; bottom: 0; display: none; justify-content: space-between; align-items: flex-end;
+    padding: 0 max(14px, env(safe-area-inset-right)) calc(env(safe-area-inset-bottom, 0px) + 10px) max(14px, env(safe-area-inset-left)); pointer-events: none; z-index: 60; }
+  #touch.on { display: flex; }
+  .tc { display: flex; gap: calc(var(--sz) * .18); }
+  .tbn { pointer-events: auto; position: relative; width: var(--sz); height: var(--sz); border: 0; padding: 0; border-radius: 50%;
+    background: rgba(28,23,17,.74); color: var(--cream); font: 700 calc(var(--sz) * .27)/1 var(--serif); letter-spacing: .04em;
+    box-shadow: inset 0 0 0 2px var(--brass), 0 2px 10px rgba(0,0,0,.4); touch-action: none; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; }
+  .tbn.down { background: var(--brass); color: var(--ink); box-shadow: inset 0 0 0 2px var(--brass-hi), 0 0 14px rgba(240,207,122,.65); }
+  .arr { position: absolute; left: 50%; top: 50%; width: 0; height: 0; border-top: calc(var(--sz) * .2) solid transparent; border-bottom: calc(var(--sz) * .2) solid transparent; }
+  .arr.l { border-right: calc(var(--sz) * .28) solid currentColor; transform: translate(-62%, -50%); }
+  .arr.r { border-left: calc(var(--sz) * .28) solid currentColor; transform: translate(-38%, -50%); }
+
+
+  /* 굵은 글씨 / 강조 */
+  .dialog .body .b { font-weight: 700; }
+  .dialog .body .em { font-weight: 700; color: #8f2f1d; }
+  .narr-text .b { font-weight: 700; }
+  .narr-text .em { font-weight: 700; color: var(--brass-hi); }
+
+  /* 사진 장면 (손수건·피란·기억): 대화창에 가리지 않도록 위쪽 빈 공간에 액자로 보여줌 */
+  .photo-wrap { position: absolute; inset: 0; opacity: 0; transition: opacity .45s ease; pointer-events: none; z-index: 3; background: #0b0d10; }
+  #vn[data-view="photo"] .photo-wrap { opacity: 1; }
+  .photo-bg { position: absolute; left: -40px; top: -40px; width: calc(100% + 80px); height: calc(100% + 80px); object-fit: cover; filter: blur(24px) brightness(.42) saturate(.9); }
+  .photo-frame { position: absolute; left: 50%; top: 16px; transform: translateX(-50%); padding: 8px; background: #efe6cf; box-shadow: 0 12px 44px rgba(0,0,0,.65); }
+  .photo-frame img { display: block; height: 384px; width: auto; }
+  #vn[data-view="photo"] .dialog { opacity: 1; }
+
+  /* 퀴즈 */
+  #vn[data-view="quiz"] .frozen { opacity: 1; }
+  .quiz { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; z-index: 9; background: rgba(6,9,14,.68); }
+  #vn[data-view="quiz"] .quiz.on { display: flex; }
+  .q-panel { --c: 16px; width: 920px; background: var(--brass); padding: 3px;
+    clip-path: polygon(var(--c) 0, calc(100% - var(--c)) 0, 100% var(--c), 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, var(--c) 100%, 0 calc(100% - var(--c)), 0 var(--c)); }
+  .q-in { padding: 30px 46px 30px; background: linear-gradient(#f2e8c9, var(--paper-2));
+    clip-path: polygon(13px 0, calc(100% - 13px) 0, 100% 13px, 100% calc(100% - 13px), calc(100% - 13px) 100%, 13px 100%, 0 calc(100% - 13px), 0 13px); }
+  .q-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+  .q-head #qNum { font: 700 44px/1 var(--serif); color: #7a5a25; letter-spacing: .06em; }
+  .q-head #qCount { font: 400 20px/1 var(--book); color: #6b5a3c; letter-spacing: .1em; }
+  .q-text { font: 700 34px/1.45 var(--serif); color: var(--ink); margin-bottom: 20px; word-break: keep-all; }
+  .q-opts { display: flex; flex-direction: column; gap: 11px; }
+  .q-opt { display: flex; gap: 16px; align-items: center; text-align: left; width: 100%; padding: 14px 22px; border: 2px solid rgba(122,90,37,.55); border-radius: 6px; background: rgba(255,255,255,.34); cursor: pointer;
+    font: 400 28px/1.35 var(--book); color: var(--ink); word-break: keep-all; transition: background .15s ease, border-color .15s ease, transform .12s ease; }
+  .q-opt .n { flex: none; font-weight: 700; color: #7a5a25; }
+  .q-opt:hover, .q-opt:focus-visible { background: #f8ecc4; border-color: var(--brass); transform: translateX(4px); outline: none; }
+  .q-opt.ok { background: #d4e4b8; border-color: #6e8f4a; }
+  .q-opt.bad { background: #ecc6b8; border-color: #a5482e; animation: shake .4s ease; }
+  @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+  .q-msg { min-height: 44px; margin-top: 14px; text-align: center; font: 700 30px/1.4 var(--serif); }
+  .q-msg.ok { color: #4d6b2c; }
+  .q-msg.bad { color: #8f2f1d; }
+  .mission.flash .in { animation: mflash .9s ease; }
+  @keyframes mflash { 0% { filter: brightness(2.2); } 100% { filter: none; } }
+
+
+  .mission.mission-tr { left: auto; right: 28px; }
+  .home-btn { position: absolute; top: 14px; right: 68px; height: 40px; padding: 0 20px; border: 0; border-radius: 20px; z-index: 6; cursor: pointer; display: none; align-items: center;
+    background: rgba(28,23,17,.72); color: var(--cream); box-shadow: inset 0 0 0 2px var(--brass); font: 600 18px/1 var(--serif); letter-spacing: .08em; -webkit-tap-highlight-color: transparent; }
+  .home-btn.on { display: flex; }
+  .home-btn:hover, .home-btn:focus-visible { background: rgba(60,48,30,.9); box-shadow: inset 0 0 0 2px var(--brass-hi); outline: none; }
+  .mute { position: absolute; top: 14px; right: 16px; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; z-index: 45; cursor: pointer;
+    background: rgba(28,23,17,.72); color: var(--cream); box-shadow: inset 0 0 0 2px var(--brass); display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
+  .mute svg { width: 24px; height: 24px; }
+  .mute .x { display: none; }
+  .mute.off .w { display: none; } .mute.off .x { display: block; } .mute.off { color: #b9ad90; }
+  .mute:hover, .mute:focus-visible { background: rgba(60,48,30,.9); box-shadow: inset 0 0 0 2px var(--brass-hi); outline: none; }
+
+
+  /* 제작자: 사진(또는 선생님 카드) 위에 마우스를 올리면 그 자리에 바로 어두운 안내가 뜸 — 절대 사진 경계를 넘지 않음 */
+  .cred-pins { position: absolute; inset: 0; z-index: 4; pointer-events: none; }   /* 뒤로가기 버튼 등 다른 요소를 가리지 않도록 */
+  .cred-pin { pointer-events: auto; }
+  .cred-pin { position: absolute; padding: 0; border: 0; background: none; cursor: pointer; border-radius: 9px; overflow: hidden; -webkit-tap-highlight-color: transparent; transition: box-shadow .18s ease; }
+  .cred-pin:hover, .cred-pin:focus-visible, .cred-pin.show { outline: none; box-shadow: inset 0 0 0 2px rgba(240,207,122,.92), 0 0 12px 1px rgba(240,207,122,.4); }
+  .cred-pin .ov { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; text-align: center;
+    padding: 6%; background: rgba(10,8,6,0); opacity: 0; transition: opacity .18s ease, background .18s ease; }
+  .cred-pin:hover .ov, .cred-pin:focus-visible .ov, .cred-pin.show .ov { opacity: 1; background: rgba(9,7,5,.82); }
+  .cred-pin .ov b { display: block; font: 700 10px/1.18 var(--serif); color: #f0cf7a; text-shadow: 0 1px 2px rgba(0,0,0,.95), 0 0 6px rgba(0,0,0,.8); word-break: keep-all; }
+  .cred-pin .ov em { display: block; font: 700 9.5px/1.2 var(--book); font-style: normal; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.95), 0 0 6px rgba(0,0,0,.75); word-break: keep-all; margin-top: 1px; }
+  .cred-pin .ov i { display: block; font: 400 8.3px/1.2 var(--book); font-style: normal; color: #d9cdae; text-shadow: 0 1px 2px rgba(0,0,0,.95); word-break: keep-all; }
+  .cred-pin.big .ov { gap: 5px; padding: 4.5% 6%; }
+  .cred-pin.big .ov b { font-size: 16px; line-height: 1.25; }
+  .cred-pin.big .ov em { font-size: 22px; line-height: 1.2; margin-top: 2px; }
+  .cred-pin.big .ov i { font-size: 12px; line-height: 1.34; max-width: 94%; margin-top: 2px; }
+  .cred-pin.big .ov i + i { margin-top: 5px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dialog .next.on, .narr-next.on, .caret, .tb:hover .sheen::before, .tb:focus-visible .sheen::before { animation: none; }
+    .tb:hover, .tb:focus-visible, .tb:active { transform: none; }
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- 타이틀 -->
+  <section id="title" class="screen active">
+    <img class="title-art" id="imgTitle" alt="피란의 기억을 잇다">
+    <img class="school-logo" id="imgLogo" alt="광안중학교" style="left:1.4%;top:86%;width:16%">
+      <button class="tb" id="btnStart" aria-label="게임 시작" style="left:60.59%;top:50.69%;width:21.77%;height:8.5%"><span class="fill"></span><span class="sheen"></span><svg class="ring" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="3.8,0 96.2,0 100,17.5 100,82.5 96.2,100 3.8,100 0,82.5 0,17.5"/></svg></button>
+      <button class="tb" id="btnContinue" aria-label="이어하기" style="left:60.59%;top:61.42%;width:21.77%;height:8.39%"><span class="fill"></span><span class="sheen"></span><svg class="ring" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="3.8,0 96.2,0 100,17.5 100,82.5 96.2,100 3.8,100 0,82.5 0,17.5"/></svg></button>
+      <button class="tb" id="btnCredits" aria-label="제작자" style="left:60.59%;top:72.69%;width:21.77%;height:8.5%"><span class="fill"></span><span class="sheen"></span><svg class="ring" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="3.8,0 96.2,0 100,17.5 100,82.5 96.2,100 3.8,100 0,82.5 0,17.5"/></svg></button>
+  </section>
+
+  <!-- 챕터 선택 -->
+  <section id="chapters" class="screen">
+    <img class="title-art blur" id="imgChBg" alt="">
+    <div class="shade-all"></div>
+    <header class="ch-head"><h2>챕터 선택</h2><i></i></header>
+    <div class="ch-grid">
+      <button class="plate card" id="chPrologue"><span class="in"><b>프롤로그</b><small>시작하기</small></span></button>
+      <button class="plate card" id="chCh1"><span class="in"><b>챕터 1</b><small>아미동 비석마을</small></span></button>
+      <button class="plate card" id="chCh2"><span class="in"><b>챕터 2</b><small>부산항과 국제시장</small></span></button>
+      <button class="plate card" id="chCh3"><span class="in"><b>챕터 3</b><small>천막학교와 보수동 책방골목</small></span></button>
+      <button class="plate card" disabled><span class="in"><b>챕터 4</b><small><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="7" width="11" height="7.5" rx="1.5" fill="#5b4a30"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="#5b4a30" stroke-width="1.8"/></svg>잠김</small></span></button>
+      <button class="plate card" disabled><span class="in"><b>결말</b><small><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="7" width="11" height="7.5" rx="1.5" fill="#5b4a30"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="#5b4a30" stroke-width="1.8"/></svg>잠김</small></span></button>
+    </div>
+    <button class="back" id="btnBack">← 처음으로</button>
+  </section>
+
+  <!-- 제작자 -->
+  <section id="credits" class="screen">
+    <img class="title-art" id="imgCredits" alt="제작자 — 동아리 담당 교사와 동아리 학생들">
+    <button class="tb sm" id="btnCreditsBack" aria-label="뒤로가기" style="left:1.32%;top:2.87%;width:13.76%;height:7.33%"><span class="fill"></span><span class="sheen"></span><svg class="ring" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="5.2,0 94.8,0 100,17.4 100,82.6 94.8,100 5.2,100 0,82.6 0,17.4"/></svg></button>
+    <div class="cred-pins" id="credPins">
+      <button class="cred-pin" style="left:15.191%;top:46.89%;width:7.177%;height:13.078%" aria-label="2113 조은님 — 챕터 3 · 피란학교, 스토리 구상 및 제작"><span class="ov"><b>챕터 3</b><em>피란학교</em><i>스토리 구상</i><i>및 제작</i></span></button>
+      <button class="cred-pin" style="left:23.983%;top:46.89%;width:7.297%;height:13.078%" aria-label="2204 김자연 — 챕터 1 · 아미동 비석마을, 스토리 구상 및 제작"><span class="ov"><b>챕터 1</b><em>아미동 비석마을</em><i>스토리 구상</i><i>및 제작</i></span></button>
+      <button class="cred-pin" style="left:32.835%;top:46.89%;width:7.356%;height:13.078%" aria-label="2208 변나현 — 챕터 1 · 아미동 비석마을, 스토리 구상 및 제작"><span class="ov"><b>챕터 1</b><em>아미동 비석마을</em><i>스토리 구상</i><i>및 제작</i></span></button>
+      <button class="cred-pin" style="left:41.746%;top:46.89%;width:7.356%;height:13.078%" aria-label="2212 임효진 — 챕터 1 · 아미동 비석마을, 스토리 구상 및 제작"><span class="ov"><b>챕터 1</b><em>아미동 비석마을</em><i>스토리 구상</i><i>및 제작</i></span></button>
+      <button class="cred-pin" style="left:50.658%;top:46.89%;width:7.356%;height:13.078%" aria-label="2305 김태희 — 챕터 3 · 피란학교, 스토리 구상 및 제작"><span class="ov"><b>챕터 3</b><em>피란학교</em><i>스토리 구상</i><i>및 제작</i></span></button>
+      <button class="cred-pin" style="left:59.629%;top:46.89%;width:7.297%;height:13.078%" aria-label="2307 박경린 — 챕터 3 · 피란학교, 스토리 구상 및 제작"><span class="ov"><b>챕터 3</b><em>피란학교</em><i>스토리 구상</i><i>및 제작</i></span></button>
+      <button class="cred-pin" style="left:68.541%;top:46.89%;width:7.297%;height:13.078%" aria-label="2310 유연서 — 챕터 3 · 피란학교, 스토리 구상 및 제작"><span class="ov"><b>챕터 3</b><em>피란학교</em><i>스토리 구상</i><i>및 제작</i></span></button>
+      <button class="cred-pin" style="left:77.392%;top:46.89%;width:7.356%;height:13.078%" aria-label="2401 김나연 — 챕터 1 · 아미동 비석마을, 스토리 구상 및 제작"><span class="ov"><b>챕터 1</b><em>아미동 비석마을</em><i>스토리 구상</i><i>및 제작</i></span></button>
+      <button class="cred-pin" style="left:15.191%;top:68.793%;width:7.177%;height:13.716%" aria-label="3102 김수빈 — 챕터 4 · 우암동 소막마을, 스토리 구상 및 제작"><span class="ov"><b>챕터 4</b><em>우암동 소막마을</em><i>스토리 구상</i><i>및 제작</i></span></button>
+      <button class="cred-pin" style="left:23.983%;top:68.793%;width:7.297%;height:13.716%" aria-label="3105 박규리 — 챕터 2 · 부산항 · 국제시장, 스토리 구상 및 제작"><span class="ov"><b>챕터 2</b><em>부산항 · 국제시장</em><i>스토리 구상</i><i>및 제작</i></span></button>
+      <button class="cred-pin" style="left:32.835%;top:68.793%;width:7.356%;height:13.716%" aria-label="3106 박정연 — 챕터 4 · 우암동 소막마을, 스토리 구상 및 제작"><span class="ov"><b>챕터 4</b><em>우암동 소막마을</em><i>스토리 구상</i><i>및 제작</i></span></button>
+      <button class="cred-pin" style="left:41.746%;top:68.793%;width:7.356%;height:13.716%" aria-label="3109 예지은 — 챕터 4 · 우암동 소막마을, 스토리 구상 및 제작"><span class="ov"><b>챕터 4</b><em>우암동 소막마을</em><i>스토리 구상</i><i>및 제작</i></span></button>
+      <button class="cred-pin" style="left:50.658%;top:68.793%;width:7.356%;height:13.716%" aria-label="3110 이서연 — 챕터 4 · 우암동 소막마을, 스토리 구상 및 제작"><span class="ov"><b>챕터 4</b><em>우암동 소막마을</em><i>스토리 구상</i><i>및 제작</i></span></button>
+      <button class="cred-pin" style="left:59.629%;top:68.793%;width:7.297%;height:13.716%" aria-label="3302 김아윤 — 챕터 2 · 부산항 · 국제시장, 스토리 구상 및 제작"><span class="ov"><b>챕터 2</b><em>부산항 · 국제시장</em><i>스토리 구상</i><i>및 제작</i></span></button>
+      <button class="cred-pin" style="left:68.541%;top:68.793%;width:7.297%;height:13.716%" aria-label="3307 박주영 — 챕터 2 · 부산항 · 국제시장, 스토리 구상 및 제작"><span class="ov"><b>챕터 2</b><em>부산항 · 국제시장</em><i>스토리 구상</i><i>및 제작</i></span></button>
+      <button class="cred-pin" style="left:77.392%;top:68.793%;width:7.356%;height:13.716%" aria-label="3308 박차미 — 챕터 2 · 부산항 · 국제시장, 스토리 구상 및 제작"><span class="ov"><b>챕터 2</b><em>부산항 · 국제시장</em><i>스토리 구상</i><i>및 제작</i></span></button>
+      <button class="cred-pin big" style="left:35.945%;top:22.754%;width:28.05%;height:19.351%" aria-label="노재훈 — 동아리 담당 교사, 2026 광안중 역사교사, 본 프로젝트 [피란의 기억을 잇다] 총괄 및 제작"><span class="ov"><b>동아리 담당 교사</b><em>노재훈</em><i>2026 광안중 역사교사</i><i>본 프로젝트 [피란의 기억을 잇다] 총괄 및 제작</i></span></button>
+    </div>
+  </section>
+
+  <!-- 대화 -->
+  <section id="vn" class="screen" data-view="black">
+    <canvas class="frozen" id="frozen" width="1280" height="720"></canvas>
+    <div class="scene">
+      <div class="portrait dim" id="pBoy"><img id="imgBoy" alt="손자"></div>
+      <div class="portrait dim" id="pGrand"><img id="imgGrand" alt="할아버지"></div>
+      <div class="vig"></div>
+    </div>
+    <div class="photo-wrap"><img class="photo-bg" id="photoBg" alt=""><div class="photo-frame"><img id="photo" alt=""></div></div>
+    <div class="dialog">
+      <img id="imgBox" alt="">
+      <div class="name" id="nameEl"></div>
+      <div class="body" id="bodyEl"></div>
+      <div class="next" id="nextDlg"><img id="imgTri" alt=""></div>
+    </div>
+    <div class="narr" id="narr" data-kind="text">
+      <div class="narr-text" data-k="text" id="narrText"></div>
+      <div class="kw" data-k="kw">
+        <div class="kw-title" id="kwTitle"></div>
+        <div class="kw-list"><div class="kw-chip"><span></span></div><div class="kw-chip"><span></span></div><div class="kw-chip"><span></span></div></div>
+      </div>
+      <div class="search" data-k="search">
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5" fill="none" stroke="#6b6250" stroke-width="2.4"/><path d="M15 15l6 6" stroke="#6b6250" stroke-width="2.4" stroke-linecap="round"/></svg>
+          <span class="search-text" id="searchText"></span><i class="caret"></i>
+        </div>
+      </div>
+      <div class="narr-next" id="narrNext"></div>
+    </div>
+    <div class="quiz" id="quiz"><div class="q-panel"><div class="q-in">
+      <div class="q-head"><span id="qNum"></span><span id="qCount"></span></div>
+      <div class="q-text" id="qText"></div>
+      <div class="q-opts" id="qOpts"></div>
+      <div class="q-msg" id="qMsg" role="status"></div>
+    </div></div></div>
+  </section>
+
+  <!-- 필드 -->
+  <section id="field" class="screen">
+    <canvas id="game" tabindex="0" aria-label="게임 화면. 방향키로 이동, Z로 줍기, 스페이스로 점프"></canvas>
+    <button class="home-btn" id="homeBtn">시작 화면으로</button>
+    <div class="mission" id="mission"><div class="in"><div class="tag">미션</div><div class="txt" id="missionText"></div></div></div>
+  </section>
+
+  <button class="mute" id="mute" aria-label="효과음 끄기" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5h3.6L12.5 19V5L7.6 9.5z" fill="currentColor"/><path class="w" d="M15.4 8.6a4.6 4.6 0 0 1 0 6.8M17.8 6.2a8 8 0 0 1 0 11.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path class="x" d="M15 9l6 6M21 9l-6 6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></button>
+  <div class="toast" id="toast" role="status"></div>
+  <div id="fader"></div>
+</div>
+
+<div id="touch" aria-hidden="true">
+  <div class="tc"><button class="tbn" data-k="left" aria-label="왼쪽으로 이동"><i class="arr l"></i></button><button class="tbn" data-k="right" aria-label="오른쪽으로 이동"><i class="arr r"></i></button></div>
+  <div class="tc"><button class="tbn" data-k="pick" aria-label="줍기">줍기</button><button class="tbn" data-k="jump" aria-label="점프">점프</button></div>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+/* ─────────── 데이터 ─────────── */
+const A = {"boy":"images/boy.webp","grandpa":"images/grandpa.webp","box":"images/box.webp","tri":"images/tri.png","title":"images/title.webp","spr":{"grandpa":{"idle":[{"src":"images/spr_grandpa_idle_0.webp","w":127,"h":218,"ax":73.0,"ay":218,"sc":1.0},{"src":"images/spr_grandpa_idle_1.webp","w":125,"h":218,"ax":71.2,"ay":218,"sc":1.0},{"src":"images/spr_grandpa_idle_2.webp","w":127,"h":217,"ax":70.6,"ay":217,"sc":1.0},{"src":"images/spr_grandpa_idle_3.webp","w":125,"h":217,"ax":70.1,"ay":217,"sc":1.0}],"walk":[{"src":"images/spr_grandpa_walk_0.webp","w":130,"h":232,"ax":68.7,"ay":232,"sc":1.0},{"src":"images/spr_grandpa_walk_1.webp","w":140,"h":228,"ax":70.8,"ay":228,"sc":1.0},{"src":"images/spr_grandpa_walk_2.webp","w":145,"h":229,"ax":75.3,"ay":228,"sc":1.0},{"src":"images/spr_grandpa_walk_3.webp","w":139,"h":229,"ax":76.9,"ay":228,"sc":1.0},{"src":"images/spr_grandpa_walk_4.webp","w":137,"h":227,"ax":71.9,"ay":227,"sc":1.0},{"src":"images/spr_grandpa_walk_5.webp","w":133,"h":227,"ax":67.9,"ay":226,"sc":1.0}],"pick":[{"src":"images/spr_grandpa_pick_0.webp","w":134,"h":194,"ax":64.1,"ay":194,"sc":1.06},{"src":"images/spr_grandpa_pick_1.webp","w":135,"h":150,"ax":65.6,"ay":149,"sc":1.1},{"src":"images/spr_grandpa_pick_2.webp","w":130,"h":140,"ax":60.6,"ay":136,"sc":1.1},{"src":"images/spr_grandpa_pick_3.webp","w":125,"h":208,"ax":67.0,"ay":207,"sc":1.09}],"jump":[{"src":"images/spr_grandpa_jump_0.webp","w":126,"h":152,"ax":58.6,"ay":152,"sc":1.1},{"src":"images/spr_grandpa_jump_1.webp","w":129,"h":177,"ax":60.6,"ay":176,"sc":1.1},{"src":"images/spr_grandpa_jump_2.webp","w":117,"h":168,"ax":56.9,"ay":167,"sc":1.1},{"src":"images/spr_grandpa_jump_3.webp","w":123,"h":162,"ax":63.5,"ay":162,"sc":1.09}]},"boy":{"idle":[{"src":"images/spr_boy_idle_0.webp","w":129,"h":255,"ax":50.3,"ay":255,"sc":1.0},{"src":"images/spr_boy_idle_1.webp","w":125,"h":256,"ax":50.3,"ay":255,"sc":1.0},{"src":"images/spr_boy_idle_2.webp","w":124,"h":256,"ax":50.3,"ay":255,"sc":1.0},{"src":"images/spr_boy_idle_3.webp","w":124,"h":255,"ax":50.3,"ay":255,"sc":1.0},{"src":"images/spr_boy_idle_4.webp","w":124,"h":255,"ax":50.3,"ay":255,"sc":1.0},{"src":"images/spr_boy_idle_5.webp","w":124,"h":256,"ax":50.3,"ay":255,"sc":1.0}],"walk":[{"src":"images/spr_boy_walk_0.webp","w":138,"h":260,"ax":54.0,"ay":260,"sc":1.0},{"src":"images/spr_boy_walk_1.webp","w":135,"h":258,"ax":52.8,"ay":258,"sc":1.0},{"src":"images/spr_boy_walk_2.webp","w":133,"h":259,"ax":53.0,"ay":258,"sc":1.0},{"src":"images/spr_boy_walk_3.webp","w":142,"h":257,"ax":53.4,"ay":257,"sc":1.0},{"src":"images/spr_boy_walk_4.webp","w":127,"h":258,"ax":51.3,"ay":258,"sc":1.0},{"src":"images/spr_boy_walk_5.webp","w":135,"h":259,"ax":48.9,"ay":258,"sc":1.0},{"src":"images/spr_boy_walk_6.webp","w":136,"h":265,"ax":50.7,"ay":265,"sc":1.0},{"src":"images/spr_boy_walk_7.webp","w":136,"h":260,"ax":53.9,"ay":260,"sc":1.0}],"pick":[{"src":"images/spr_boy_pick_0.webp","w":118,"h":222,"ax":46.9,"ay":222,"sc":1.131},{"src":"images/spr_boy_pick_1.webp","w":149,"h":146,"ax":43.8,"ay":146,"sc":1.077},{"src":"images/spr_boy_pick_2.webp","w":153,"h":149,"ax":52.0,"ay":149,"sc":1.098},{"src":"images/spr_boy_pick_3.webp","w":111,"h":222,"ax":44.3,"ay":222,"sc":1.12}],"jump":[{"src":"images/spr_boy_jump_0.webp","w":145,"h":171,"ax":47.7,"ay":171,"sc":1.149},{"src":"images/spr_boy_jump_1.webp","w":130,"h":208,"ax":43.5,"ay":208,"sc":1.06},{"src":"images/spr_boy_jump_2.webp","w":130,"h":193,"ax":45.2,"ay":193,"sc":1.09},{"src":"images/spr_boy_jump_3.webp","w":114,"h":222,"ax":46.2,"ay":222,"sc":1.168}]},"piggy":{"idle":[{"src":"images/spr_piggy_idle_0.webp","w":114,"h":188,"ax":60.3,"ay":188,"sc":1.0},{"src":"images/spr_piggy_idle_1.webp","w":114,"h":188,"ax":61.4,"ay":188,"sc":1.0},{"src":"images/spr_piggy_idle_2.webp","w":114,"h":186,"ax":60.5,"ay":186,"sc":1.0},{"src":"images/spr_piggy_idle_3.webp","w":113,"h":186,"ax":60.3,"ay":186,"sc":1.0}],"walk":[{"src":"images/spr_piggy_walk_0.webp","w":111,"h":187,"ax":60.0,"ay":186,"sc":1.0},{"src":"images/spr_piggy_walk_1.webp","w":109,"h":185,"ax":60.0,"ay":185,"sc":1.0},{"src":"images/spr_piggy_walk_2.webp","w":113,"h":185,"ax":60.9,"ay":185,"sc":1.0},{"src":"images/spr_piggy_walk_3.webp","w":112,"h":184,"ax":59.1,"ay":184,"sc":1.0},{"src":"images/spr_piggy_walk_4.webp","w":113,"h":184,"ax":59.5,"ay":184,"sc":1.0},{"src":"images/spr_piggy_walk_5.webp","w":113,"h":184,"ax":60.2,"ay":184,"sc":1.0},{"src":"images/spr_piggy_walk_6.webp","w":114,"h":183,"ax":61.0,"ay":183,"sc":1.0},{"src":"images/spr_piggy_walk_7.webp","w":110,"h":185,"ax":60.4,"ay":185,"sc":1.0},{"src":"images/spr_piggy_walk_8.webp","w":112,"h":185,"ax":60.3,"ay":185,"sc":1.0}],"jump":[{"src":"images/spr_piggy_jump_0.webp","w":117,"h":177,"ax":57.8,"ay":177,"sc":1.0},{"src":"images/spr_piggy_jump_1.webp","w":118,"h":178,"ax":56.4,"ay":178,"sc":1.0},{"src":"images/spr_piggy_jump_2.webp","w":116,"h":181,"ax":56.9,"ay":180,"sc":1.0},{"src":"images/spr_piggy_jump_3.webp","w":112,"h":161,"ax":57.5,"ay":161,"sc":1.0},{"src":"images/spr_piggy_jump_4.webp","w":111,"h":157,"ax":57.7,"ay":157,"sc":1.0}],"crouch":[{"src":"images/spr_piggy_crouch_0.webp","w":116,"h":177,"ax":57.6,"ay":177,"sc":1.0},{"src":"images/spr_piggy_crouch_1.webp","w":115,"h":134,"ax":62.7,"ay":133,"sc":1.0},{"src":"images/spr_piggy_crouch_2.webp","w":115,"h":141,"ax":58.5,"ay":141,"sc":1.0},{"src":"images/spr_piggy_crouch_3.webp","w":117,"h":136,"ax":45.1,"ay":136,"sc":1.0}],"stand":[{"src":"images/spr_piggy_stand_0.webp","w":113,"h":177,"ax":58.6,"ay":176,"sc":1.0},{"src":"images/spr_piggy_stand_1.webp","w":115,"h":178,"ax":56.6,"ay":178,"sc":1.0},{"src":"images/spr_piggy_stand_2.webp","w":114,"h":178,"ax":58.5,"ay":178,"sc":1.0},{"src":"images/spr_piggy_stand_3.webp","w":111,"h":179,"ax":59.6,"ay":179,"sc":1.0}]}},"room":"images/room.webp","photos":{"hanky":"images/photos_hanky.webp","refuge":"images/photos_refuge.webp","memory":"images/photos_memory.webp","well":"images/photos_well.webp","wellBoy":"images/photos_wellBoy.webp","ghost":"images/photos_ghost.webp","toilet":"images/photos_toilet.webp"},"items":{"hanky":"images/items_hanky.webp","bucketUp":"images/items_bucketUp.webp","bucketDown":"images/items_bucketDown.webp","frag":"images/items_frag.webp"},"ch1":{"map":"images/ch1_map.webp","npcs":{"guide":{"src":"images/ch1_npcs_guide.webp","w":248,"h":386,"ax":105.8,"ay":386},"granny":{"src":"images/ch1_npcs_granny.webp","w":130,"h":318,"ax":59.0,"ay":309},"deoksam":{"src":"images/ch1_npcs_deoksam.webp","w":145,"h":332,"ax":82.2,"ay":331},"monk":{"src":"images/ch1_npcs_monk.webp","w":129,"h":304,"ax":63.6,"ay":304}}},"credits":"images/credits.webp","ch2":{"harbor":"images/ch2_harbor.webp","market":"images/ch2_market.webp","harborFront":"images/ch2_harborFront.webp"},"granny":"images/granny.webp","deoksamB":"images/deoksamB.webp","guideB":"images/guideB.webp","monkB":"images/monkB.webp","daesung":{"map":"images/daesung_map.webp"},"ch3":{"tentschool":"images/ch3_tentschool.webp","bookstore":"images/ch3_bookstore.webp"},"puzzle":{"board":"images/puzzle_board.webp","done":"images/puzzle_done.webp","pieces":["images/puzzle_pieces_0.webp","images/puzzle_pieces_1.webp","images/puzzle_pieces_2.webp","images/puzzle_pieces_3.webp","images/puzzle_pieces_4.webp"]},"logo":"images/logo.webp","aminjump":{"map":"images/aminjump_map.webp","platforms":[{"x":1468.5,"y":600,"w":173.0,"h":71.5,"tile":"leaf1","frac":0.14},{"x":1546.8,"y":530,"w":76.5,"h":68.0,"tile":"flower_box","frac":0.35},{"x":1389.8,"y":495,"w":90.5,"h":68.5,"tile":"crate","frac":0.28},{"x":1338.0,"y":400,"w":74.0,"h":49.5,"tile":"stub_small","frac":0.35},{"x":1138.2,"y":435,"w":133.5,"h":88.5,"tile":"fence_wire_barrel","frac":0.3},{"x":1016.5,"y":360,"w":137.0,"h":56.0,"tile":"barrier_yellow","frac":0.35},{"x":1057.5,"y":270,"w":125.0,"h":88.5,"tile":"flower_fence","frac":0.38},{"x":852.2,"y":295,"w":191.5,"h":84.5,"tile":"fence_blue_planter","frac":0.25},{"x":721.5,"y":225,"w":173.0,"h":65.0,"tile":"fence_flower2","frac":0.35},{"x":563.8,"y":255,"w":188.5,"h":116.0,"tile":"shed_fence","frac":0.5},{"x":431.2,"y":175,"w":173.5,"h":92.5,"tile":"fence_flower_lamp","frac":0.3},{"x":358.0,"y":120,"w":70.0,"h":49.0,"tile":"stub_stairs","frac":0.35},{"x":192.5,"y":100,"w":101.0,"h":70.5,"tile":"flower1","frac":0.3}],"start":{"x":1605.0,"y":650,"w":156.0,"h":66.0,"tile":"fence_metal","frac":0.35},"goal":{"x":10,"y":110,"w":320,"h":101.0,"tile":"shed","frac":0.45,"drawW":137.5,"drawX":31.2},"world":1801,"tiles":{"barrier_yellow":"images/aminjump_tiles_barrier_yellow.webp","crate":"images/aminjump_tiles_crate.webp","fence_blue_planter":"images/aminjump_tiles_fence_blue_planter.webp","fence_flower2":"images/aminjump_tiles_fence_flower2.webp","fence_flower_lamp":"images/aminjump_tiles_fence_flower_lamp.webp","fence_metal":"images/aminjump_tiles_fence_metal.webp","fence_wire_barrel":"images/aminjump_tiles_fence_wire_barrel.webp","flower1":"images/aminjump_tiles_flower1.webp","flower_box":"images/aminjump_tiles_flower_box.webp","flower_fence":"images/aminjump_tiles_flower_fence.webp","leaf1":"images/aminjump_tiles_leaf1.webp","shed":"images/aminjump_tiles_shed.webp","shed_fence":"images/aminjump_tiles_shed_fence.webp","stub_small":"images/aminjump_tiles_stub_small.webp","stub_stairs":"images/aminjump_tiles_stub_stairs.webp"}}};              // 이미지 (portrait, 대화창, 병실 맵, 캐릭터 스프라이트)
+const SCRIPT = [{"type": "narr", "segs": [{"s": "창밖으로 바다가 보인다."}]}, {"type": "narr", "segs": [{"s": "병실에는 백발의 노인이 서서 허공을 보고있다."}]}, {"type": "narr", "segs": [{"s": "그의 침대 옆에는 자신의 이름표가 붙어 있지만 그는 자신의 이름조차 자주 잊는다."}]}, {"type": "narr", "segs": [{"s": "문이 열리고 손주가 들어온다."}]}, {"type": "field", "objectives": [{"kind": "npc", "mission": "병실 끝에 있는 할아버지를 클릭해서 말을 걸자"}]}, {"type": "say", "who": "손자", "segs": [{"s": "할아버지, 오늘은 기분이 좀 어떠세요?"}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "..."}]}, {"type": "say", "who": "손자", "segs": [{"s": "할아버지?"}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "...미안하구나."}]}, {"type": "say", "who": "손자", "segs": [{"s": "왜요?"}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "네가 누군지 모르겠다."}]}, {"type": "say", "who": "손자", "segs": [{"s": "(잠시 당황했지만, 괜찮다는 듯 피식 웃는다.)"}]}, {"type": "say", "who": "손자", "segs": [{"s": "괜찮아요."}]}, {"type": "say", "who": "손자", "segs": [{"s": "저는 할아버지 "}, {"s": "손주", "b": 1}, {"s": "예요."}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "..... (끄덕) ......"}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "그런데.... 요즘따라 내가 더 이상해졌구나."}]}, {"type": "say", "who": "손자", "segs": [{"s": "뭐가요?"}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "요즘은 정말 아무것도 기억나지 않는구나."}]}, {"type": "say", "who": "손자", "segs": [{"s": "그러게요. 할아버지가 과거를 생각하는 것조차 "}, {"s": "고통", "b": 1}, {"s": "이라고 하셨잖아요."}]}, {"type": "say", "who": "손자", "segs": [{"s": "그래서 집에 증조할아버지, 증조할머니. "}, {"s": "심지어 할머니 사진조차 없앴다고 하셨잖아요.", "b": 1}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "...그랬었나... 모르겠구나."}]}, {"type": "say", "who": "손자", "segs": [{"s": "정말 아무것도 기억이 나지 않으시군요."}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "맞아...."}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "정말 소중한 사람들이 있었는데... 얼굴도 기억 안 나고... 이름도 기억 안 난다."}]}, {"type": "say", "who": "손자", "segs": [{"s": "..."}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "그 사람들이 날 많이 사랑해줬던 것 같은데... "}, {"s": "내가 그 사람들을 잊어버렸어.", "b": 1}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "이러면 안 되는데. 절대로 잊으면 안 되는 사람들인데..."}]}, {"type": "narr", "segs": [{"s": "그때.\nTV 앞에서 낡은 손수건 하나가 떨어진다."}]}, {"type": "field", "objectives": [{"kind": "pickup", "mission": "Z키를 눌러 병실에 떨어져 있는 손수건을 줍고 할아버지에게 돌아가자"}, {"kind": "npc", "mission": "병실 끝에 있는 할아버지를 클릭해서 말을 걸자"}]}, {"type": "say", "who": "손자", "segs": [{"s": "할아버지, 이거 뭐예요?"}]}, {"type": "say", "who": "손수건", "segs": [{"s": "(손수건에는 희미하게 이름 한 글자가 적혀 있다.)"}], "photo": "hanky"}, {"type": "say", "who": "손수건", "segs": [{"s": "(하지만 대부분 지워져 읽을 수 없다.)"}], "photo": "hanky"}, {"type": "say", "who": "손자", "segs": [{"s": "혹시 기억나세요?"}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "..."}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "...어머니?"}]}, {"type": "narr", "segs": [{"s": "손주가 놀란다."}]}, {"type": "say", "who": "손자", "segs": [{"s": "네...? 어머니요?"}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "....(이내 기억을 잃은듯) 아니다, 잘 모르구나."}]}, {"type": "narr", "segs": [{"s": "그때.\nTV에서 피란수도 부산에 대한 이야기를 한다."}]}, {"type": "field", "objectives": [{"kind": "tv", "mission": "TV를 클릭해서 TV의 내용을 들으세요."}]}, {"type": "say", "who": "TV", "segs": [{"s": "부산광역시는 '피란수도 부산'의 문화유산들을 유네스코 세계문화유산으로 등재하고자 하고 있습니다."}], "photo": "refuge"}, {"type": "say", "who": "TV", "segs": [{"s": "잠정목록에는 "}, {"s": "피란민들이 일본인 공동묘지에서 삶의 터를 잡은 마을", "b": 1, "em": 1}, {"s": "이 있는데요."}], "photo": "refuge"}, {"type": "say", "who": "TV", "segs": [{"s": "많은 관광객들이 이곳을 찾고 있습니다."}], "photo": "refuge"}, {"type": "field", "objectives": [{"kind": "npc", "mission": "할아버지가 하고 싶은 말이 있으신가 봅니다. 할아버지에게 말을 거세요."}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "그래, 기억이 나는구나. 비석......"}]}, {"type": "say", "who": "손자", "segs": [{"s": "네?"}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "내가 살았던 곳은 돌이 많았어."}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "부모님 손을 잡고 북에서 배를 타고 일본인 "}, {"s": "공동묘지", "b": 1, "em": 1}, {"s": "에 도착했었거든."}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "언덕이 있었고. 집들이 다닥다닥 붙어 있었지."}]}, {"type": "say", "who": "손자", "segs": [{"s": "어디였는데요?"}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "모르겠구나."}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "기억나는건..... 사람들이 다 힘들게 살았던거였어.... 먹을 것도 부족했고. 다들 피란 왔다고 했어."}]}, {"type": "keywords", "title": "할아버지의 기억", "items": ["비석", "언덕", "피란민 마을"]}, {"type": "say", "who": "손자", "segs": [{"s": "피란..."}]}, {"type": "say", "who": "손자", "segs": [{"s": "그 다음은요?"}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "이젠 기억이 안나는구나... 모르겠다."}]}, {"type": "narr", "segs": [{"s": "할아버지는 한숨을 쉰다."}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "나는 내 인생을 잃어버린 것 같구나."}]}, {"type": "say", "who": "손자", "segs": [{"s": ".  .  .  .  ."}]}, {"type": "say", "who": "손자", "segs": [{"s": "그럼 찾아보죠."}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "뭘?"}]}, {"type": "say", "who": "손자", "segs": [{"s": "할아버지 인생이요."}]}, {"type": "say", "who": "손자", "segs": [{"s": "할아버지가 기억하는 건 아주 조금뿐이지만."}]}, {"type": "say", "who": "손자", "segs": [{"s": "비석", "b": 1, "em": 1}, {"s": "....."}, {"s": "언덕", "b": 1, "em": 1}, {"s": "....."}, {"s": "피란", "b": 1, "em": 1}, {"s": "....."}]}, {"type": "say", "who": "손자", "segs": [{"s": "이 단서부터 찾아가면 돼요."}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "정말 찾을 수 있을까?"}]}, {"type": "say", "who": "손자", "segs": [{"s": "찾을 수 있어요."}]}, {"type": "say", "who": "손자", "segs": [{"s": "할아버지의 어린 시절도. 할아버지의 친구도. 증조할아버지와 증조할머니도."}]}, {"type": "say", "who": "손자", "segs": [{"s": "...그리고 할머니도."}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "(눈빛이 흔들리며)....할머니?"}]}, {"type": "say", "who": "손자", "segs": [{"s": "네."}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "기억은 잘 나지 않지만..."}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "그 사람을 잊어버린 게... 가장 미안하구나."}]}, {"type": "say", "who": "손자", "segs": [{"s": "그러니까 더 찾아야죠."}]}, {"type": "narr", "segs": [{"s": "손주는 휴대폰을 꺼낸다."}]}, {"type": "narr", "segs": [{"s": "그리고 검색 화면을 보여준다."}]}, {"type": "search", "text": "아미동 비석마을"}, {"type": "say", "who": "손자", "segs": [{"s": "여기. 할아버지가 말한 곳 아닐까요?"}]}, {"type": "narr", "segs": [{"s": "할아버지가 사진을 바라보자, 아주 짧은 기억이 스친다."}]}, {"type": "say", "who": "??", "segs": [{"s": "조심히 내려가거라!"}], "photo": "memory"}, {"type": "say", "who": "할아버지의 어린 시절", "segs": [{"s": "네! 조심히 다녀 올게요!"}], "photo": "memory"}, {"type": "say", "who": "??", "segs": [{"s": "사랑한다, 내 아들아!"}], "photo": "memory"}, {"type": "narr", "segs": [{"s": "기억은 곧 사라진다."}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "...저기."}]}, {"type": "say", "who": "손자", "segs": [{"s": "네?"}]}, {"type": "say", "who": "할아버지", "segs": [{"s": "가보고 싶구나."}]}, {"type": "say", "who": "손자", "segs": [{"s": "좋아요."}]}, {"type": "say", "who": "손자", "segs": [{"s": "우리 같이 가요."}]}, {"type": "quiz", "questions": [{"q": "할아버지는 현재 어떠신가요?", "opts": ["건강하시다", "치매가 있으시다.", "운동을 좋아하신다.", "가족을 잘 기억하고 있다."], "ans": 1}, {"q": "나는 무엇을 해야할까요?", "opts": ["할아버지의 기억을 찾을 수 있는 장소를 방문한다.", "친구와 게임을 하러 간다.", "침대로 가서 잔다.", "산책을 하다가 집으로 가서 논다."], "ans": 0}, {"q": "우리는 첫 장소로 어디를 가야할까요?", "opts": ["국제시장", "우암동 소막마을", "아미동 비석마을", "부산항"], "ans": 2}], "retry": "다시 생각해보자"}, {"type": "blackout"}];           // 프롤로그 대본 (script.txt를 변환한 것)
+
+/* ─────────── 공통 ─────────── */
+const $ = s => document.querySelector(s);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const stage = $('#stage'), fader = $('#fader');
+const screens = [...document.querySelectorAll('.screen')];
+let mode = 'title';
+let pendingField = { map: 'outdoor', objectives: [], resume: false };
+let hospState = null;               // 병실에서 손주의 마지막 위치 (조작 구간이 여러 번 이어지므로)
+const game = { fragments: [] };      // 이후 챕터에서 쓸 수집 정보
+
+function fit() {
+  const k = Math.min(document.body.clientWidth / 1280, document.body.clientHeight / 720);
+  stage.style.transform = `scale(${k})`;
+}
+addEventListener('resize', () => { fit(); updateTouch(); }); fit();
+
+let busy = false;
+async function go(id, before) {
+  fader.classList.add('on');
+  await sleep(340);
+  if (before) await before();
+  screens.forEach(s => s.classList.toggle('active', s.id === id));
+  mode = id;
+  stage.classList.toggle('on-credits', id === 'credits');
+  updateTouch();
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  if (id === 'field') await fieldStart();
+  await sleep(90);
+  fader.classList.remove('on');
+  await sleep(340);
+}
+
+$('#imgLogo').src = A.logo; $('#imgTitle').src = A.title; $('#imgChBg').src = A.title; $('#imgCredits').src = A.credits;
+$('#imgBoy').src = A.boy; $('#imgGrand').src = A.grandpa;
+$('#imgBox').src = A.box; $('#imgTri').src = A.tri;
+
+/* ─────────── 효과음 (파일 없이 Web Audio로 직접 합성) ─────────── */
+const SFX = (() => {
+  let ac = null, out = null, nbuf = null, muted = false, lastBlip = 0;
+  try { muted = localStorage.getItem('sfxMuted') === '1'; } catch (_) {}
+  const on = () => !!ac && !muted && ac.state !== 'closed';
+  const rnd = () => 0.93 + Math.random() * 0.14;
+  function use(c) {
+    ac = c;
+    const lim = ac.createWaveShaper(), curve = new Float32Array(1024);   // 소리가 겹쳐도 깨지지 않게 부드럽게 눌러 주는 장치
+    for (let k = 0; k < 1024; k++) curve[k] = Math.tanh(1.6 * (k / 512 - 1)) / Math.tanh(1.6);
+    lim.curve = curve;
+    out = ac.createGain(); out.gain.value = 1.0; out.connect(lim); lim.connect(ac.destination);
+    nbuf = ac.createBuffer(1, Math.floor(ac.sampleRate * 2), ac.sampleRate);
+    const d = nbuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  function unlock() {                       // 브라우저 정책상 첫 클릭/키 입력 뒤에 소리가 켜짐
+    if (!ac) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; try { use(new AC()); } catch (_) { return; } }
+    if (ac.state === 'suspended' && ac.resume) ac.resume();
+  }
+  function tone(f0, dur, vol, o = {}) {
+    if (!on()) return;
+    const t = ac.currentTime + (o.delay || 0);
+    const osc = ac.createOscillator(), g = ac.createGain();
+    osc.type = o.type || 'sine'; osc.frequency.setValueAtTime(f0, t);
+    if (o.f1) osc.frequency.exponentialRampToValueAtTime(o.f1, t + dur);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + (o.attack || 0.004));
+    g.gain.setTargetAtTime(0, t + (o.attack || 0.004), dur / 4);
+    osc.connect(g); g.connect(out); osc.start(t); osc.stop(t + dur + 0.05);
+  }
+  function noise(dur, vol, o = {}) {
+    if (!on()) return;
+    const t = ac.currentTime + (o.delay || 0);
+    const src = ac.createBufferSource(); src.buffer = nbuf;
+    const f = ac.createBiquadFilter(); f.type = o.type || 'bandpass'; f.frequency.setValueAtTime(o.f || 1500, t);
+    if (o.f1) f.frequency.exponentialRampToValueAtTime(o.f1, t + dur);
+    f.Q.value = o.q || 1;
+    const g = ac.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + (o.attack || 0.004));
+    g.gain.setTargetAtTime(0, t + (o.attack || 0.004), dur / 4);
+    src.connect(f); f.connect(g); g.connect(out); src.start(t, Math.random() * 1.4, dur + 0.06);
+  }
+  const VOICE = {                            // 말하는 사람마다 "대화 소리"의 높낮이가 달라짐
+    '손자': { f: 780, type: 'sine', vol: 0.075 }, '할아버지': { f: 330, type: 'triangle', vol: 0.1 },
+    '손수건': { f: 560, type: 'sine', vol: 0.07 }, 'TV': { f: 1000, type: 'square', vol: 0.022 }, '??': { f: 430, type: 'sine', vol: 0.07 }, '할아버지의 어린 시절': { f: 900, type: 'sine', vol: 0.07 },
+  };
+  const S = {
+    unlock, use, get muted() { return muted; },
+    setMuted(m) { muted = !!m; try { localStorage.setItem('sfxMuted', muted ? '1' : '0'); } catch (_) {} },
+    // 글자 하나가 나타날 때 나는 소리
+    blip(who, ch) {
+      if (!on() || /[\s.,…?!'"()\-~]/.test(ch)) return;
+      const t = performance.now(); if (t - lastBlip < 36) return; lastBlip = t;
+      const v = VOICE[who];
+      if (!v) { noise(0.03, 0.09, { f: 2700 * rnd(), q: 2.5 }); tone(160 * rnd(), 0.04, 0.04, { type: 'triangle' }); return; }
+      const k = 1 + ((ch.charCodeAt(0) % 9) - 4) * 0.035;
+      tone(v.f * k, 0.045, v.vol, { type: v.type, f1: v.f * k * 0.86 });
+    },
+    hover() { tone(1250, 0.05, 0.04, { f1: 1000 }); },
+    click() { tone(520, 0.07, 0.11, { type: 'triangle' }); tone(780, 0.1, 0.09, { type: 'triangle', delay: 0.045 }); },
+    back() { tone(560, 0.06, 0.1, { type: 'triangle' }); tone(400, 0.09, 0.09, { type: 'triangle', delay: 0.045 }); },
+    tap() { tone(330, 0.04, 0.06, { type: 'triangle' }); },
+    blocked() { tone(210, 0.09, 0.09, { type: 'triangle', f1: 170 }); },
+    advance() { tone(640, 0.05, 0.06, { type: 'triangle', f1: 480 }); },
+    photo() { noise(0.16, 0.08, { f: 2200, f1: 800, q: 0.8 }); tone(300, 0.1, 0.03, { delay: 0.04 }); },
+    chip() { tone(784, 0.4, 0.07); tone(1568, 0.3, 0.025, { delay: 0.01 }); },
+    // 걷기 / 점프 / 착지
+    step(surface) {
+      if (surface === 'dirt') { noise(0.11, 0.14, { type: 'lowpass', f: 1200, f1: 500, q: 0.7 }); noise(0.05, 0.06, { f: 2300 * rnd(), q: 1.4, delay: 0.014 }); }
+      else { tone(150 * rnd(), 0.06, 0.1, { f1: 85 }); noise(0.045, 0.085, { f: 2300 * rnd(), q: 1.4 }); }
+    },
+    jump() { noise(0.14, 0.07, { f: 450, f1: 1500, q: 0.8 }); tone(300, 0.1, 0.06, { f1: 520 }); },
+    land(surface) {
+      tone(120, 0.11, 0.16, { f1: 60 });
+      noise(0.07, 0.09, surface === 'dirt' ? { type: 'lowpass', f: 900, q: 0.7 } : { f: 1900, q: 1.2 });
+    },
+    // 줍기: 물건에 손이 닿을 때(스치는 소리 / 돌 부딪힘) → 손에 넣었을 때(맑은 소리)
+    rustle(kind) {
+      if (kind === 'stone') { tone(250, 0.07, 0.11, { type: 'triangle', f1: 170 }); noise(0.05, 0.1, { f: 1600, q: 1.5 }); return; }
+      for (let i = 0; i < 3; i++) noise(0.07, 0.07, { f: 3200 - i * 700, f1: 1500, q: 0.7, delay: i * 0.055 });
+    },
+    get(kind) {
+      if (kind === 'stone') { tone(700, 0.09, 0.09, { f1: 900 }); return; }
+      tone(660, 0.14, 0.09); tone(990, 0.22, 0.08, { delay: 0.08 });
+    },
+    mission() { [660, 880, 1100].forEach((f, i) => tone(f, 0.32, 0.09, { delay: i * 0.09 })); },
+    tvOn() { noise(0.26, 0.09, { type: 'highpass', f: 2500, q: 0.6 }); tone(1000, 0.05, 0.05, { type: 'square', delay: 0.26 }); },
+    correct() { [523, 659, 784].forEach((f, i) => tone(f, 0.26, 0.09, { delay: i * 0.08 })); },
+    wrong() { tone(210, 0.2, 0.11, { type: 'triangle', f1: 160 }); tone(150, 0.3, 0.11, { type: 'triangle', delay: 0.16, f1: 110 }); },
+  };
+  return S;
+})();
+addEventListener('pointerdown', SFX.unlock, true);
+addEventListener('keydown', SFX.unlock, true);
+
+// 화면 오른쪽 위 소리 켜기/끄기 버튼 (M 키도 가능)
+const muteBtn = $('#mute');
+function paintMute() { muteBtn.classList.toggle('off', SFX.muted); muteBtn.setAttribute('aria-label', SFX.muted ? '효과음 켜기' : '효과음 끄기'); muteBtn.setAttribute('aria-pressed', String(SFX.muted)); }
+function toggleMute() { SFX.setMuted(!SFX.muted); paintMute(); if (!SFX.muted) SFX.click(); }
+muteBtn.addEventListener('click', e => { e.stopPropagation(); toggleMute(); });
+addEventListener('keydown', e => { if (e.code === 'KeyM' && !e.repeat) toggleMute(); });
+paintMute();
+
+// 버튼 소리 (마우스를 올릴 때 / 눌렀을 때)
+document.addEventListener('mouseover', e => {
+  const el = e.target.closest && e.target.closest('.tb, .plate:not(:disabled), .back, .q-opt, .mute, .home-btn, .cred-pin');
+  if (el && !el.contains(e.relatedTarget)) SFX.hover();
+});
+document.addEventListener('click', e => {
+  const el = e.target.closest && e.target.closest('.tb, .plate, .back, .home-btn');
+  if (!el || el.disabled) return;
+  if (el.id === 'btnContinue') SFX.blocked();
+  else if (el.id === 'btnBack' || el.id === 'homeBtn' || el.id === 'btnCreditsBack') SFX.back();
+  else SFX.click();
+}, true);
+
+/* ─────────── 대화 엔진 ─────────── */
+const vnEl = $('#vn'), narr = $('#narr');
+const nameEl = $('#nameEl'), bodyEl = $('#bodyEl'), nextDlg = $('#nextDlg'), narrNext = $('#narrNext');
+const narrText = $('#narrText'), kwTitle = $('#kwTitle'), searchText = $('#searchText');
+const chips = [...document.querySelectorAll('.kw-chip')];
+const pBoy = $('#pBoy'), pGrand = $('#pGrand');
+const frozen = $('#frozen'), fctx = frozen.getContext('2d');
+const photoEl = $('#photo'), photoBgEl = $('#photoBg');
+const quizEl = $('#quiz'), qNum = $('#qNum'), qCount = $('#qCount'), qText = $('#qText'), qOpts = $('#qOpts'), qMsg = $('#qMsg');
+const vn = { steps: [], i: 0, token: 0, ready: false, view: 'black', fast: false, finish: null, t0: 0, quizPick: null, voice: 'narr' };
+const SAY_MS = 28, NARR_MS = 34;       // 글자당 타이핑 시간(ms)
+const wait = ms => (vn.fast ? Promise.resolve() : sleep(ms));
+const plain = t => [{ s: t }];
+const RIGHT_BUST = { '할아버지': A.grandpa, '100세 할머니': A.granny, '최덕삼': A.deoksamB, '문화유산 해설사': A.guideB, '대성사 스님': A.monkB };
+const LEFT_BUST = { '손자': A.boy, '할아버지': A.grandpa };   // 할머니와의 대화에서는 할아버지도 왼쪽(가족쪽) 자리에 섬
+const VILLAGER_TALK = {
+  granny: [
+    { type: 'say', who: '100세 할머니', segs: plain('날씨가 좋구나, 아미동에서 바라보는 부산의 풍경이 참 아름답구나.') },
+    { type: 'say', who: '손자', segs: plain('저도 처음 와보는데 너무 아름다운 것 같아요!') },
+  ],
+  deoksam: [
+    { type: 'say', who: '최덕삼', segs: plain('하하, 이래봬도 난 어릴 때부터 아미동에서 살았다구!') },
+  ],
+  guide: [
+    { type: 'say', who: '문화유산 해설사', segs: plain('여기는 우리가 지켜나가고 기억해야 할 1023일의 역사를 보여주는 마을입니다.') },
+    { type: 'say', who: '문화유산 해설사', segs: [{ s: '아미동 비석마을', b: 1, em: 1 }, { s: '은 피란수도 부산에 피란민들이 정착한 모습들을 보여주고 있습니다.' }] },
+  ],
+  monk: [
+    { type: 'say', who: '대성사 스님', segs: plain('타국의 땅에 잠들어 있는 일본인들의 영혼을 위해 매년 위령제를 지냅니다.') },
+    { type: 'say', who: '대성사 스님', segs: plain('그들이 식민지배의 책임을 반성하고, 양국 간의 평화가 찾아오길 기원합니다.') },
+  ],
+};
+
+// segs: [{s:'글자', b:1, em:1}, {p:멈춤ms}]  — 굵은 글씨/강조/잠시 멈춤을 지원
+function typeInto(el, segs, tk, ms) {
+  return new Promise(resolve => {
+    el.textContent = '';
+    const units = [], spans = [];
+    for (const sg of segs) {
+      if (sg.p) { units.push({ p: sg.p }); continue; }
+      for (const ch of sg.s) {
+        const s = document.createElement('span');
+        s.className = 'ch' + (sg.b ? ' b' : '') + (sg.em ? ' em' : '');
+        s.textContent = ch; el.appendChild(s); spans.push(s);
+        units.push({ ch, s });
+      }
+    }
+    let i = 0, done = false;
+    const finish = () => { if (done) return; done = true; spans.forEach(s => s.classList.add('on')); vn.finish = null; resolve(true); };
+    vn.finish = finish;
+    if (vn.fast) return finish();
+    const tick = () => {
+      if (done) return;
+      if (tk !== vn.token) { done = true; return resolve(false); }
+      if (i >= units.length) return finish();
+      const u = units[i++];
+      if (u.p) { setTimeout(tick, vn.fast ? 0 : u.p); return; }
+      u.s.classList.add('on');
+      SFX.blip(vn.voice, u.ch);
+      let d = ms;
+      if (u.ch === ' ' || u.ch === '\n') d = 0;
+      else if (u.ch === ',') d += 70;
+      else if ('.…?!'.includes(u.ch)) d += 130;
+      setTimeout(tick, d);
+    };
+    tick();
+  });
+}
+
+function setView(v) { vn.view = v; vnEl.dataset.view = v; }
+
+function vnPrepare(steps) {
+  vn.steps = steps || SCRIPT;
+  vn.i = 0; vn.token++; vn.ready = false; vn.fast = false;
+  hospState = null;
+  setView('black');
+  narr.dataset.kind = 'text';
+  narrText.textContent = ''; bodyEl.textContent = ''; nameEl.textContent = '';
+  nextDlg.classList.remove('on'); narrNext.classList.remove('on'); quizEl.classList.remove('on');
+  pBoy.classList.add('dim'); pGrand.classList.add('dim');
+  pBoy.classList.remove('on'); pGrand.classList.remove('on');
+}
+
+function runQuiz(st) {
+  return new Promise(resolve => {
+    const qs = st.questions;
+    let qi = 0, locked = false;
+    const NUM = '①②③④';
+    const render = () => {
+      const q = qs[qi];
+      qNum.textContent = 'Q' + (qi + 1); qCount.textContent = `${qi + 1} / ${qs.length}`;
+      qText.textContent = q.q; qMsg.textContent = ''; qMsg.className = 'q-msg';
+      qOpts.innerHTML = '';
+      q.opts.forEach((o, k) => {
+        const b = document.createElement('button'); b.className = 'q-opt';
+        b.innerHTML = '<span class="n"></span><span class="t"></span>';
+        b.firstChild.textContent = NUM[k]; b.lastChild.textContent = o;
+        b.addEventListener('click', e => { e.stopPropagation(); pick(k); });
+        qOpts.appendChild(b);
+      });
+    };
+    const pick = k => {
+      if (locked || k < 0 || k >= qs[qi].opts.length) return;
+      locked = true;
+      const btn = qOpts.children[k];
+      if (k === qs[qi].ans) {
+        btn.classList.add('ok'); SFX.correct(); qMsg.textContent = '정답이에요!'; qMsg.className = 'q-msg ok';
+        setTimeout(() => { qi++; locked = false; if (qi >= qs.length) { vn.quizPick = null; quizEl.classList.remove('on'); resolve(); } else render(); }, 950);
+      } else {
+        btn.classList.add('bad'); SFX.wrong(); qMsg.textContent = st.retry; qMsg.className = 'q-msg bad';
+        setTimeout(() => { qi = 0; locked = false; render(); }, 1600);   // 틀리면 Q1로 돌아감
+      }
+    };
+    vn.quizPick = pick;
+    quizEl.classList.add('on'); render();
+  });
+}
+
+function setName(txt) {            // 이름이 길면(예: 할아버지의 어린 시절) 이름표 띠에 맞게 글자 크기를 줄임
+  nameEl.textContent = '';
+  const sp = document.createElement('span'); sp.textContent = txt; nameEl.appendChild(sp);
+  let fs = 26; sp.style.fontSize = fs + 'px';
+  while (sp.offsetWidth > nameEl.clientWidth - 12 && fs > 13) { fs -= 1; sp.style.fontSize = fs + 'px'; }
+}
+
+async function runStep() {
+  const tk = ++vn.token;
+  const st = vn.steps[vn.i];
+  vn.ready = false; vn.fast = false; vn.finish = null; vn.t0 = performance.now(); vn.voice = 'narr';
+  nextDlg.classList.remove('on'); narrNext.classList.remove('on');
+
+  if (st.type === 'villagerDone') { st.resolve(); return; }   // 주민 대화가 끝나면 제자리로 돌아가기 위한 표시
+  if (st.type === 'field') {                 // 병실: 손주 조작 구간 (목표를 마치면 대화가 이어짐)
+    pendingField = { map: st.map || 'hospital', objectives: st.objectives, resume: !!hospState };
+    await go('field');
+    return;
+  }
+  if (st.type === 'wait') {                  // "(잠시 기다렸다가)"
+    bodyEl.textContent = ''; narrText.textContent = '';
+    await sleep(st.ms);
+    if (tk !== vn.token) return;
+    vn.i++; if (vn.i < vn.steps.length) runStep();
+    return;
+  }
+  if (st.type === 'quiz') {
+    if (vn.view !== 'quiz') { setView('quiz'); await sleep(420); }
+    if (tk !== vn.token) return;
+    await runQuiz(st);
+    if (tk !== vn.token) return;
+    vn.i++; if (vn.i < vn.steps.length) runStep();
+    return;
+  }
+
+  if (st.type === 'say') {
+    const want = st.photo ? 'photo' : (st.who === '??' ? 'dark' : 'room');
+    vn.voice = st.who;
+    if (want === 'photo') { photoEl.src = A.photos[st.photo]; photoBgEl.src = A.photos[st.photo]; if (vn.view !== 'photo') SFX.photo(); }
+    if (want === 'room') {
+      const isLeft = st.side ? st.side === 'left' : st.who === '손자';
+      pBoy.classList.toggle('dim', !isLeft); pBoy.classList.toggle('on', isLeft);
+      pGrand.classList.toggle('dim', isLeft); pGrand.classList.toggle('on', !isLeft);
+      if (isLeft && LEFT_BUST[st.who]) imgBoy.src = LEFT_BUST[st.who];
+      if (!isLeft && RIGHT_BUST[st.who]) imgGrand.src = RIGHT_BUST[st.who];
+    }
+    setName(st.who);
+    bodyEl.textContent = '';
+    if (want !== vn.view) { setView(want); await sleep(want === 'photo' ? 520 : 420); } else await sleep(120);
+    if (tk !== vn.token) return;
+    await typeInto(bodyEl, st.segs, tk, SAY_MS);
+    if (tk !== vn.token) return;
+    nextDlg.classList.add('on');
+    vn.ready = true;
+    return;
+  }
+
+  // 화자가 없는 문장: 검은 화면
+  const changed = vn.view !== 'black';
+  if (changed) { narr.dataset.kind = 'none'; setView('black'); await sleep(460); }
+  else await sleep(200);
+  if (tk !== vn.token) return;
+
+  if (st.type === 'narr') {
+    narr.dataset.kind = 'text';
+    await typeInto(narrText, st.segs, tk, NARR_MS);
+  } else if (st.type === 'search') {
+    narr.dataset.kind = 'search';
+    await typeInto(searchText, plain(st.text), tk, 55);
+  } else if (st.type === 'keywords') {
+    narr.dataset.kind = 'kw';
+    kwTitle.textContent = ''; chips.forEach(c => { c.classList.remove('on'); c.firstChild.textContent = ''; });
+    if (!await typeInto(kwTitle, plain(st.title), tk, 70)) return;
+    await wait(260);
+    for (let k = 0; k < st.items.length && k < chips.length; k++) {
+      if (tk !== vn.token) return;
+      chips[k].classList.add('on'); SFX.chip();
+      await wait(220);
+      if (!await typeInto(chips[k].firstChild, plain(st.items[k]), tk, 85)) return;
+      if (!game.fragments.includes(st.items[k])) game.fragments.push(st.items[k]);
+      await wait(220);
+    }
+  } else if (st.type === 'blackout') {
+    narr.dataset.kind = 'none';
+    await sleep(1500);
+    if (tk !== vn.token) return;
+    pendingField = { map: 'outdoor', objectives: [], resume: false };
+    await go('field');
+    return;
+  }
+  if (tk !== vn.token) return;
+  narrNext.classList.add('on');
+  vn.ready = true;
+}
+
+// 클릭/Space: 타이핑 중이면 글자를 한 번에 모두 표시, 다 나타난 뒤에는 다음 대사로
+function advance() {
+  if (mode !== 'vn' || vn.view === 'quiz') return;
+  if (vn.ready) {
+    SFX.advance();
+    vn.ready = false;
+    vn.i++;
+    if (vn.i < vn.steps.length) runStep();
+    return;
+  }
+  if (performance.now() - vn.t0 < 250) return;   // 넘기자마자 이어 눌러 건너뛰는 실수 방지
+  vn.fast = true;
+  if (vn.finish) vn.finish();
+}
+vnEl.addEventListener('click', advance);
+
+/* ─────────── 버튼 ─────────── */
+let toastTimer = 0;
+function toast(msg) { const el = $('#toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 1700); }
+$('#btnContinue').addEventListener('click', () => toast('준비 중이에요'));
+$('#btnCredits').addEventListener('click', async () => { if (busy) return; busy = true; await go('credits'); busy = false; });
+
+const credPins = [...document.querySelectorAll('.cred-pin')];
+credPins.forEach(el => {
+  el.addEventListener('click', e => {
+    e.stopPropagation();
+    const was = el.classList.contains('show');
+    credPins.forEach(o => o.classList.remove('show'));
+    if (!was) el.classList.add('show');
+    SFX.tap();
+  });
+});
+document.addEventListener('click', () => credPins.forEach(o => o.classList.remove('show')));
+
+$('#btnCreditsBack').addEventListener('click', async () => { if (busy) return; busy = true; await go('title'); busy = false; });
+$('#btnStart').addEventListener('click', async () => { if (busy) return; busy = true; await go('chapters'); busy = false; });
+$('#chCh1').addEventListener('click', async () => {      // 챕터 1: 아미동 비석마을 — 먼저 짧은 나레이션, 이어서 언덕 점프맵
+  if (busy) return; busy = true;
+  await go('vn', () => vnPrepare([
+    { type: 'narr', segs: plain('손자는 할아버지와 같이 아미동 비석마을로 향했다.') },
+    { type: 'narr', segs: plain('아미동 비석마을은 아미산 중턱에 있기 때문에 높은 언덕을 올라가야만 했다.') },
+    { type: 'field', map: 'aminjump', objectives: [] },
+  ]));
+  busy = false;
+  await sleep(300);
+  runStep();
+});
+$('#chCh2').addEventListener('click', async () => {      // 챕터 2: 부산항 → 국제시장
+  if (busy) return; busy = true;
+  pendingField = { map: 'harbor', objectives: [], resume: false };
+  await go('field');
+  busy = false;
+});
+$('#chCh3').addEventListener('click', async () => {      // 챕터 3: 천막학교 → 보수동 책방골목
+  if (busy) return; busy = true;
+  pendingField = { map: 'tentschool', objectives: [], resume: false };
+  await go('field');
+  busy = false;
+});
+$('#btnBack').addEventListener('click', async () => { if (busy) return; busy = true; await go('title'); busy = false; });
+$('#chPrologue').addEventListener('click', async () => {
+  if (busy) return; busy = true;
+  await go('vn', vnPrepare);
+  busy = false;
+  await sleep(300);
+  runStep();
+});
+
+/* ─────────── 필드: 조작 캐릭터 + 맵 ─────────── */
+const canvas = $('#game'), ctx = canvas.getContext('2d');
+const VW = 1280, VH = 720;
+canvas.width = VW; canvas.height = VH;
+frozen.width = VW; frozen.height = VH;
+const FONT = (s, w = 600) => `${w} ${s}px "Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif`;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const GRAVITY = 2600, PREP = 0.07, LAND = 0.11;
+
+// 조작 캐릭터별 설정 (게임에서 손주/할아버지를 번갈아 조작할 수 있도록 분리)
+const HEROES = {
+  grandpa: { key: 'grandpa', base: 0.86, speed: 315, jumpV: 940, walkT: 0.09, idleT: 0.22, pickT: [0.16, 0.18, 0.24, 0.28],
+             animScale: { idle: 1, walk: 0.945, pick: 1, jump: 1.03 }, emptyPick: false, itemDxN: 51.6, bakedAt: 2 },
+  boy:     { key: 'boy', base: 0.635, speedK: 380, jumpV: 1010, walkT: 0.09, idleT: 0.24, pickT: [0.15, 0.17, 0.34], collectT: 0.46,   // 줍기: 숙이기 → 웅크리기 → (줍는 순간) → 바로 서서 대기
+             // 차분한 대기: 숨 쉬듯 천천히 바뀌고, 가끔 눈만 깜빡임 (프레임, 시간(초))
+             idleTL: [[0, 1.2], [1, 0.4], [2, 1.0], [3, 0.4], [0, 1.4], [4, 0.14], [5, 1.1], [2, 0.5], [1, 0.8], [3, 0.4], [4, 0.14]],
+             stepFrames: [3, 7],   // 발이 땅에 닿는 걷기 프레임
+             animScale: { idle: 1, walk: 1, pick: 1, jump: 1 }, emptyPick: true, itemDxN: 60, bakedAt: 99 },
+  piggy:   { key: 'piggy', base: 0.75 },   // 챕터1 언덕 점프맵 전용(업은 캐릭터) — 별도 물리(PIGGY)를 사용, 이동/점프만 씀
+};
+const IDLE_SEQ = [0, 1, 2, 3, 2, 1];
+const NPC_SCALE = 0.9;      // NPC 할아버지는 손자와 어울리게 조금 작게
+const heroScale = () => H.base * M.mul;
+const heroSpeed = () => (H.speedK ? H.speedK * heroScale() : H.speed) * (M.speedScale || 1);
+const heroItemDx = () => (H.itemDxN ? H.itemDxN * heroScale() : H.itemDx);
+let GROUND = 600;
+const groundAt = x => (M.groundFn ? M.groundFn(x) : GROUND);      // 위치마다 다른 땅 높이 (계단·경사)
+const slopeAt = x => Math.abs(groundAt(x + 3) - groundAt(x - 3)) / 6;
+const REACH = 80;
+
+const SPR = {};
+const framesReady = Promise.all(Object.keys(A.spr).flatMap(h => {
+  SPR[h] = {};
+  return Object.keys(A.spr[h]).flatMap(anim => {
+    SPR[h][anim] = A.spr[h][anim].map(f => {
+      const im = new Image(); im.src = f.src;
+      return { img: im, w: f.w, h: f.h, ax: f.ax, ay: f.ay, ready: im.decode().catch(() => {}) };
+    });
+    return SPR[h][anim].map(f => f.ready);
+  });
+}));
+const hankyImg = new Image(); hankyImg.src = A.items.hanky;
+const hankyReady = hankyImg.decode().catch(() => {});
+const bucketDownImg = new Image(); bucketDownImg.src = A.items.bucketDown;
+const bucketUpImg = new Image(); bucketUpImg.src = A.items.bucketUp;
+const bucketReady = Promise.all([bucketDownImg.decode().catch(() => {}), bucketUpImg.decode().catch(() => {})]);
+const fragImg = new Image(); fragImg.src = A.items.frag;
+const fragReady = fragImg.decode().catch(() => {});
+const AMI_S = 1.25, AMI_TOP = Math.round((VH - 543 * AMI_S) / 2);   // 챕터 1 맵: 2896x543 그림을 1.25배로
+const amiImg = new Image(); amiImg.src = A.ch1.map;
+let amiCv = null;
+const amiReady = amiImg.decode().then(() => {
+  amiCv = document.createElement('canvas'); amiCv.width = Math.round(2896 * AMI_S); amiCv.height = Math.round(543 * AMI_S);
+  const ac = amiCv.getContext('2d'); ac.imageSmoothingEnabled = true; ac.imageSmoothingQuality = 'high';
+  ac.drawImage(amiImg, 0, 0, amiCv.width, amiCv.height);
+}).catch(() => {});
+const HARB_S = 1.2, MKT_S = 1.25, MKT_TOP = Math.round((VH - 543 * MKT_S) / 2);   // 챕터 2 맵 확대 배율
+const DS_S = VH / 940, DS_TOP = Math.round((VH - 940 * DS_S) / 2);   // 대성사 배경 확대 배율
+const TENT_S = 1.2, BOOK_S = VH / 941, BOOK_TOP = Math.round((VH - 941 * BOOK_S) / 2);   // 챕터 3 맵 확대 배율
+const ch3Ready = Promise.all([prescale('daesung', A.daesung.map, DS_S), prescale('tentschool', A.ch3.tentschool, TENT_S), prescale('bookstore', A.ch3.bookstore, BOOK_S)]);
+const bigMap = {};   // 확대해 둔 맵 그림 (매 프레임은 1:1로 잘라 그림)
+// ── 챕터1 점프맵: 화면 전체에 딱 맞는 정적 배경(스크롤 없음) + 빨간 표시를 그대로 옮긴 발판 목록
+const AMINJUMP = { platforms: A.aminjump.platforms, start: A.aminjump.start, goal: A.aminjump.goal, world: A.aminjump.world };
+const AMINJUMP_TILES = {};   // 발판 타일 이미지 (사용자가 준 시트에서 하나씩 잘라낸 것)
+const aminTilesReady = Promise.all(Object.keys(A.aminjump.tiles).map(name => {
+  const im = new Image(); im.src = A.aminjump.tiles[name]; AMINJUMP_TILES[name] = im;
+  return im.decode().catch(() => {});
+}));
+const PIGGY = { speed: 260, jumpV: 880, gravity: 2600, footPad: 16, pickT: [0.16, 0.16, 0.42, 0.16, 0.16, 0.16] };   // 발판 판정 여유(px); pickT: 앉기3장 + 대기(줍는 순간) + 일어나기2장
+let goalPlat = null;
+function prescale(key, src, s) {
+  const im = new Image(); im.src = src;
+  return im.decode().then(() => {
+    const cv = document.createElement('canvas'); cv.width = Math.round(im.naturalWidth * s); cv.height = Math.round(im.naturalHeight * s);
+    const c2 = cv.getContext('2d'); c2.imageSmoothingEnabled = true; c2.imageSmoothingQuality = 'high'; c2.drawImage(im, 0, 0, cv.width, cv.height);
+    bigMap[key] = cv;
+  }).catch(() => {});
+}
+const ch2Ready = Promise.all([prescale('harbor', A.ch2.harbor, HARB_S), prescale('market', A.ch2.market, MKT_S), prescale('harborFront', A.ch2.harborFront, HARB_S)]);   // harborFront: 부두 가장자리 구조물(말뚝·줄무늬 블록)을 캐릭터 앞에 다시 그리는 층
+const aminjumpBgReady = prescale('aminjump', A.aminjump.map, VH / 793);
+const VIL = {};
+const vilReady = Promise.all(Object.keys(A.ch1.npcs).map(k => {
+  const f = A.ch1.npcs[k], im = new Image(); im.src = f.src;
+  VIL[k] = { img: im, w: f.w, h: f.h, ax: f.ax, ay: f.ay };
+  return im.decode().catch(() => {});
+}));
+const roomImg = new Image(); roomImg.src = A.room;
+let roomCv = null;   // 병실 그림을 한 번만 확대해 두고, 매 프레임은 1:1로 잘라 그림 (부드럽고 가벼움)
+const roomReady = roomImg.decode().then(() => {
+  roomCv = document.createElement('canvas'); roomCv.width = Math.round(1983 * 1.25); roomCv.height = Math.round(484 * 1.25);
+  const rc = roomCv.getContext('2d'); rc.imageSmoothingEnabled = true; rc.imageSmoothingQuality = 'high';
+  rc.drawImage(roomImg, 0, 0, roomCv.width, roomCv.height);
+}).catch(() => {});
+
+// 병실 맵: 그림 1983x484를 1.25배로 사용, 위아래 검은 여백은 화면 중앙 정렬
+const HOSP_S = 1.25, HOSP_TOP = Math.round((VH - 484 * HOSP_S) / 2);
+const HANKY_X = 600;                                   // 손수건이 떨어지는 자리 (TV 앞 바닥)
+const TV = { l: 452, r: 532, t: 296, b: 402 };         // 클릭할 TV 영역 (월드 x, 화면 y)
+const TV_CX = (TV.l + TV.r) / 2;
+// 챕터 1 인물 배치 (인물배치.png의 빨간 상자: 중심 x, 발 y, 키 — 모두 그림 원본 픽셀 기준)
+const AMI = {
+  deoksam: { cx: 92.5, y: 422, h: 159 }, guide: { cx: 694.5, y: 435, h: 159 }, granny: { cx: 1411, y: 437, h: 134 },
+  grandpa: { cx: 2637, y: 438, h: 143 }, ground: 437,
+};
+// 주민 키(원본 픽셀): 손자보다 살짝 큰 정도로 줄임
+const AMI_H = { deoksam: 130, guide: 142, granny: 114 };
+// 우물 클릭 영역 (원본 픽셀 → 화면 좌표는 AMI_S, AMI_TOP으로 변환)
+const WELL_NATIVE = { l: 1670, t: 255, r: 1910, b: 437 };
+const WELL = { l: WELL_NATIVE.l * AMI_S, r: WELL_NATIVE.r * AMI_S, t: AMI_TOP + WELL_NATIVE.t * AMI_S, b: AMI_TOP + WELL_NATIVE.b * AMI_S };
+const WELL_CX = (WELL.l + WELL.r) / 2;
+const TOILET_NATIVE = { l: 2095, t: 225, r: 2345, b: 437 };
+const TOILET = { l: TOILET_NATIVE.l * AMI_S, r: TOILET_NATIVE.r * AMI_S, t: AMI_TOP + TOILET_NATIVE.t * AMI_S, b: AMI_TOP + TOILET_NATIVE.b * AMI_S };
+const TOILET_CX = (TOILET.l + TOILET.r) / 2;
+const WIRYEONGBI_NATIVE = { l: 165, t: 250, r: 335, b: 605 };   // 대성사 맵의 흰 관음상(위령비)
+const WIRYEONGBI = { l: WIRYEONGBI_NATIVE.l * DS_S, r: WIRYEONGBI_NATIVE.r * DS_S, t: DS_TOP + WIRYEONGBI_NATIVE.t * DS_S, b: DS_TOP + WIRYEONGBI_NATIVE.b * DS_S };
+const WIRYEONGBI_CX = (WIRYEONGBI.l + WIRYEONGBI.r) / 2;
+// 비석 조각 5개: 아미동 3개(평지), 대성사 2개(평지)
+const AMI_FRAG_X = [470, 1250, 2500].map(x => x * AMI_S);
+const DS_FRAG_X = [450, 900].map(x => x * DS_S);
+const SPELL_TEXT = '나무아미타불-남은 미련은 내려놓고 부디 편안히 성불하소서';
+const BUCKET_LOST_X = 300 * AMI_S;             // 마을 구석에 떨어진 양동이
+const BUCKET_UP_X = 1640 * AMI_S;              // 물을 뜬 뒤, 우물 옆에 놓일 양동이
+
+// ── 아미동 우물 미션: 진행 상태는 맵을 나갔다 와도 유지됨
+let amiObjI = 0;
+let amiBucketReady = false;   // true가 되면 우물 옆에 '일어선 양동이'가 계속 보임
+const AMI_OBJECTIVES = [
+  { kind: 'well1', mission: '우물을 클릭하세요!' },
+  { kind: 'granny', mission: '100세 할머니가 할 말이 있는 것 같다. 할머니를 클릭해서 말을 걸자' },
+  { kind: 'bucket', mission: '잃어버린 양동이를 찾자' },
+  { kind: 'well2', mission: '우물을 클릭해서 물을 마시자' },
+  { kind: 'npc', mission: '마을 끝에 계신 할아버지가 할 말이 있으신 것 같다. 말을 걸어 보자' },
+  { kind: 'toilet', mission: '할아버지가 화장실이 급하다고 하신다. 화장실을 찾아 클릭하자.' },
+  { kind: 'deoksam2', mission: '맨 오른쪽에 계신 최덕삼 할아버지가 우리를 부른다. 왼쪽 끝으로 가서 말을 걸어보자.' },
+  { kind: 'monk2', mission: "맨 왼쪽 끝 계단으로 올라가서 '대성사'로 가고 '대성사 스님'을 클릭해서 말을 걸자." },
+  { kind: 'wiryeongbi', mission: "위령비를 찾아 클릭하고, '성불 주문'을 외우세요" },
+  { kind: 'guide2', mission: '아미동 비석마을의 문화유산 해설사를 클릭해서 말을 걸어보자' },
+  { kind: 'fragments', mission: '아미동 비석마을과 대성사를 걸어보면서 비석 조각 5개를 찾아주세요.' },
+  { kind: 'guide3', mission: '비석 조각을 모두 찾았다면 문화유산 해설사에게 다시 가자' },
+];
+let amiFragCount = 0;
+const amiFragTaken = { ami: [false, false, false], ds: [false, false] };
+const sayL = (who, s) => ({ type: 'say', who, side: 'left', segs: typeof s === 'string' ? plain(s) : s });
+const sayR = (who, s) => ({ type: 'say', who, side: 'right', segs: typeof s === 'string' ? plain(s) : s });
+const sayWell = (who, s) => ({ type: 'say', who, photo: 'well', segs: typeof s === 'string' ? plain(s) : s });
+const narrL = s => ({ type: 'narr', segs: plain(s) });
+const AMI_GRANNY_SCRIPT = [
+  sayR('100세 할머니', [{ s: '너, 예전에 ' }, { s: '아미동', b: 1, em: 1 }, { s: '에 살던 아이 아니냐?' }]),
+  sayL('손자', '저 아닌데요…?'),
+  sayR('100세 할머니', '너랑 똑 닮은 아이가 있었는데…..'),
+  sayL('할아버지', '손자랑 똑 닮은 아이라면…. 나 아닌가…?'),
+  sayR('100세 할머니', '그래! 예전에 우리 뒷집에 살던 아이! 벌써 우리들이 이렇게 늙었구나.'),
+  narrL('할아버지는 할머니가 초면인 듯 하다.'),
+  sayR('100세 할머니', '아,기억이 안나는구나…'),
+  sayR('100세 할머니', [{ s: '부산역을 불태웠던 대화재', b: 1, em: 1 }, { s: '때문에, 집을 잃은 내가 천막하나 들고 아미산에 왔을 때' }]),
+  sayR('100세 할머니', '너가 얼마나 귀여웠는지 모른단다….'),
+  sayL('할아버지', '…..(모르는 눈치)....'),
+  sayL('손자', '할머니도 피란오셨던거예요? 피란 이야기 더 해주세요!'),
+  sayWell('100세 할머니', '그래. 부산으로 피란민들이 엄청 와서 사람은 많고, 마실 물조차 없었단다.'),
+  sayWell('100세 할머니', '그래서 한 우물에 막 200, 300명씩 줄서서 마시던거 기억 안 나니?'),
+  sayWell('100세 할머니', '그 때를 생각하니 참 열심히 살았구나 싶다.'),
+  sayL('할아버지', [{ s: '그래….. 당시엔 먹을 것도 없어서 미군 부대에서 먹고 남은 잔반을 재활용해서 ' }, { s: '꿀꿀이죽', b: 1, em: 1 }, { s: '도 먹었었지.' }]),
+  sayR('100세 할머니', '그래, 네 어머니가 너에게  꿀꿀이죽에 들어있는 담배, 이쑤시개까지 먹지 말라고 어머님이 신신당부했었잖니..'),
+  sayL('할아버지', '그리고… 변소도 마땅히 없었던 것 같아.'),
+  sayL('손자', '할아버지 기억 나시는거예요?!'),
+  {
+    type: 'quiz', retry: '다시 생각해보자', questions: [
+      { q: '할머니는 어떻게 아미산에 오게 되었나요?', opts: ['부산역을 불태운 대화재로 집을 잃었기 때문.', '마실 물을 얻기 위해', '굶주린 배를 달래기 위해', '귀여운 할아버지의 어린 시절을 보기 위해'], ans: 0 },
+      { q: '할머니와 할아버지가 기억하신 피란 당시의 모습이 아닌 것은 무엇인가요?', opts: ['마실 물이 매우 부족했다.', '꿀꿀이죽을 먹었다.', '변소(화장실)가 부족했다.', '피란민들이 산에서 집을 짓지 않았다.'], ans: 3 },
+    ],
+  },
+  sayL('할아버지', '얘기를 들으니 얼핏 기억이 나는것 같기도 하구나.'),
+  narrL('쿨럭, 쿨럭 — 이때 할아버지가 마른 기침을 하신다.'),
+  sayL('할아버지', '그런데… 많이 걸어서 올라오다보니 목이 마르는 것 같구나.'),
+  sayL('손자', '할아버지 그럼 이 우물에서 목 좀 축이는건 어때요?'),
+  sayR('100세 할머니', '근데 이 우물은 너무 오랫동안 쓰지 않아서 양동이가 어디에 있는지 모른단다.'),
+  sayR('100세 할머니', '우물을 쓰고싶다면 양동이를 찾아와야해'),
+];
+const AMI_WELLDONE_SCRIPT = [
+  sayL('할아버지', '목을 축이니 웬지 옛 기억이 떠오르는듯 하구나..'),
+  sayL('손자', '할아버지, 이제 좀 괜찮아요? 기억 나시는 것 있으세요?'),
+  sayL('할아버지', '그때 물을 받는다고 기다리고 있었는데 어떤 애가 새치기를 해서 대판 싸웠지.'),
+  sayL('할아버지', '못 마시고 집으로 돌아갈 때도 있고 했지…'),
+  sayL('할아버지', '그 물 정말 맛있었는데 지금 생각하니 참 추억이구나'),
+  sayR('100세 할머니', '오랜만에 만나니 너무 반갑구나.'),
+  sayR('100세 할머니', [{ s: '너가 살았던 곳, 이 ' }, { s: '아미동 비석마을', b: 1, em: 1 }, { s: '에 또 오렴.' }]),
+  sayL('손자', '할머니 감사합니다!'),
+];
+const sayGhost = (who, s) => ({ type: 'say', who, photo: 'ghost', segs: typeof s === 'string' ? plain(s) : s });
+const AMI_NPC2_SCRIPT = [
+  sayL('손자', '그럼 할머니 말고 다른 아는 사람이 더 있는지 좀 둘러볼까요?'),
+  sayR('할아버지', '그런데 아까 물을 마셔서 그런지 화장실이 가고싶구나'),
+  sayL('손자', '오는 길에 공중화장실을 본 것 같아요'),
+];
+const sayToilet = (who, s) => ({ type: 'say', who, photo: 'toilet', segs: typeof s === 'string' ? plain(s) : s });
+const AMI_TOILET_SCRIPT = [
+  sayToilet('손자', '엇,여기... 비석이 깨져있네요?'),
+  sayToilet('할아버지', '음… 그러게 말이다. 참 이상하구나.'),
+  sayToilet('할아버지', '여기 주변에 비석이 깨진 이유를 아는 사람이 있을 것 같은데,,'),
+];
+const AMI_DEOKSAM2_SCRIPT = [
+  sayR('최덕삼', '자네, 예전에 아미동 비석마을에 살았지 않았나?'),
+  sayL('할아버지', '아미동에서 살았던 것 같긴 한데….'),
+  sayL('할아버지', '기억이 가물가물하네요…'),
+  sayR('최덕삼', '아니, 그….'),
+  sayR('최덕삼', '엄청 어릴 때, 저기 화장실 주변에 있는 비석 보고 귀신 나온다고 무서워했던 걔 아니야?'),
+  sayL('손자', '마침 저희가 화장실 앞에서 깨진 비석을 봤는데, 혹시 그게 그건가요?'),
+  sayR('최덕삼', '화장실 앞에 비석을 봤다고?.... 그 비석 맞는 것 같은데?'),
+  sayL('손자', '와! 이야기 해주세요!'),
+  narrL('최덕삼씨는 잠시 고민을 하고, 이야기를 꺼낸다.'),
+  sayGhost('최덕삼', '너네 할아버지가 밤에 화장실이 급해서'),
+  sayGhost('최덕삼', '돌담 밑에서 몰래 볼일을 보고 나오다가'),
+  sayGhost('최덕삼', '비석 뒤에 귀신을 보고 비명을 지르고 달려오긴 했었는데…'),
+  sayGhost('최덕삼', '달려오다가 실수로 그 비석을 밀치는 바람에'),
+  sayGhost('최덕삼', '그 비석이 깨져버렸단다.'),
+  sayGhost('손자', '할아버지! 혹시 이 이야기 듣고 기억나는거 없으세요?'),
+  sayGhost('할아버지', '기억이 나는 것 같구나…. 그때 정말 무서웠단다.'),
+  sayGhost('최덕삼', '요즘도 가끔 저 화장실에서 \'이타이, 이타이\'라는 소리가 들린다는 이야기가 있다고 하더라고…'),
+  narrL('귀신 이야기를 듣고 할아버지의 표정이 좋지 못하다.'),
+  sayL('할아버지', '마음이 좋지 않구나.. 영혼을 성불시켜드릴 수 없을까?'),
+  sayR('최덕삼', [{ s: '왼쪽 계단 위로 올라가면 ' }, { s: '대성사', b: 1, em: 1 }, { s: '라는 절이 있는데,' }]),
+  sayR('최덕삼', '거기 스님이 터를 잃은 일본인들을 위한 제사를 지내주고 있으니 물어보는게 어떤가?'),
+];
+const AMI_MONK_SCRIPT = [
+  sayR('대성사 스님', '무슨 일로 찾아 오셨소?'),
+  sayL('할아버지', '제가 어렸을 때 지금 화장실 주변에 있는 비석을 제가 실수로 깨버렸어요.'),
+  sayL('할아버지', '오랜만에 그 비석을 보니 마음이 너무 좋지 못합니다.'),
+  sayL('할아버지', '그 영혼을 성불시켜드리고 싶어요.'),
+  sayR('대성사 스님', '잘 찾아오셨소.'),
+  sayR('대성사 스님', '성불 주문을 외워주시오.'),
+];
+const AMI_MONK_DONE_SCRIPT = [
+  sayL('할아버지', '이제 마음이 편하구나….'),
+  sayR('대성사 스님', '아미동에 대해서 궁금한게 있다면'),
+  sayR('대성사 스님', '문화유산 해설사를 찾아가보는건 어떠시오?'),
+];
+const AMI_GUIDE2_SCRIPT = [
+  sayL('손자', '엇!'),
+  sayL('손자', '이 허름한 집은 뭐지?!'),
+  sayR('문화유산 해설사', '어서오세요~ 아미동 비석마을은 처음이신가요?'),
+  sayL('손자', '처음은 아닌데, 비석마을에 대해 알고싶어서 왔어요!'),
+  sayR('문화유산 해설사', [{ s: '이 마을엔 ' }, { s: '일제강점기 일본인 공동묘지', b: 1, em: 1 }, { s: '에 있던 비석들이 마을 곳곳에 남아 있습니다.' }]),
+  sayR('문화유산 해설사', [{ s: '한국전쟁', b: 1, em: 1 }, { s: ' 당시 부산으로 피란 온 ' }, { s: '피란 온 사람들', b: 1, em: 1 }, { s: '이 이곳에 터를 잡으면서,' }]),
+  sayR('문화유산 해설사', '묘지의 돌을 집의 축대나 계단 등에 사용했습니다.'),
+  sayR('문화유산 해설사', [{ s: '그래서 이 마을에는 ' }, { s: '일제강점기의 흔적', b: 1, em: 1 }, { s: '과 ' }, { s: '피란민들의 삶', b: 1, em: 1 }, { s: '이 한 공간에 겹쳐 있습니다.' }]),
+  sayR('문화유산 해설사', [{ s: '과거의 아픔을 기억', b: 1, em: 1 }, { s: '하면서도 그 위에서 ' }, { s: '삶을 이어간 사람들의 모습', b: 1, em: 1 }, { s: '을 생각해 볼 수 있는 곳이죠.' }]),
+  sayL('손자', '우와 그렇구나!'),
+  {
+    type: 'quiz', retry: '다시 생각해보자', questions: [
+      { q: '아미동 비석마을은 어디 위에서 지어진 마을인가요?', opts: ['중국인 공동묘지', '미국인 공동묘지', '일본인 공동묘지', '베트남인 공동묘지'], ans: 2 },
+      { q: '어떤 전쟁 때문에 피란민이 부산으로 왔을까요?', opts: ['베트남 전쟁', '임진왜란', '2차 세계대전', '한국전쟁(6.25전쟁)'], ans: 3 },
+    ],
+  },
+  sayR('문화유산 해설사', '아미동 비석마을에 대해 잘 알게 되었군요!'),
+  sayR('문화유산 해설사', '그런데 한 가지 부탁이 있습니다…'),
+  sayR('문화유산 해설사', '사실 며칠 전에 태풍이 아미동 비석마을을 휩쓸고 갔어요.'),
+  sayR('문화유산 해설사', '그래서 뒤에 있는 집에 사용된 비석이 깨져버려서 비석에 구멍이 났어요.'),
+  sayR('문화유산 해설사', [{ s: '비석 조각 5개', b: 1, em: 1 }, { s: '를 찾아줄 수 있나요?' }]),
+  sayL('손자', '네, 좋아요!'),
+];
+const AMI_GUIDE3_SCRIPT = [
+  sayR('문화유산 해설사', '비석 조각을 찾아주셨네요! 너무 감사합니다.'),
+  sayR('문화유산 해설사', '제가 지금 너무 바빠서 그런데… 한가지만 더 부탁드려도 될까요?'),
+  sayR('문화유산 해설사', '깨진 부분을 잘 맞춰서 복원시켜주세요! 부탁드립니다!'),
+  sayL('할아버지', '그러고보니 이 집….'),
+  sayL('할아버지', '익숙한 것 같기도 하구나.'),
+  sayL('손자', '그렇다면….'),
+  sayL('손자', '할아버지의 기억을 되찾는데 도움이 될 지 몰라요!'),
+  sayL('손자', '그러면 복원시켜 봐요!'),
+];
+const AMI_END_SCRIPT = [
+  sayL('할아버지', '그래! 이 곳은 내 집이었어.'),
+  sayL('할아버지', '예전에도 이렇게 깨진 비석을 맞췄었지.'),
+  sayL('할아버지', '아아.. 어머니와 아버지의 모습이 생각나는구나…'),
+];
+// 왼쪽 끝 계단의 경사 (원본 픽셀 x, y): 계단 모서리를 따라 오르막
+const AMI_SLOPE = [[28, 232], [45, 258], [58, 284], [72, 308], [90, 331], [112, 354], [135, 378], [158, 402], [178, 424], [200, 437]];
+function amiGround(xs) {
+  const x = xs / AMI_S;
+  let y;
+  if (x >= 200) y = 437; else if (x <= 28) y = 232;
+  else { let k = 0; while (AMI_SLOPE[k + 1][0] < x) k++; const [x0, y0] = AMI_SLOPE[k], [x1, y1] = AMI_SLOPE[k + 1]; y = y0 + (y1 - y0) * (x - x0) / (x1 - x0); }
+  return AMI_TOP + y * AMI_S;
+}
+const MAPS = {
+  outdoor: { bg: 'outdoor', home: true, surface: 'dirt', hero: 'grandpa', world: 3200, ground: 600, mul: 1, start: { x: 260, dir: 1 }, stones: [520, 900, 1260, 1640, 2050, 2480], npc: null, tv: null, stonesHud: true },
+  aminjump: { kind: 'platform', bg: 'aminjump', hero: 'piggy' },
+  amidong: { bg: 'amidong', home: true, surface: 'tile', hero: 'boy', world: Math.round(2896 * AMI_S), ground: AMI_TOP + Math.round(AMI.ground * AMI_S), mul: 0.94, jumpScale: 0.88,
+             start: { x: Math.round(AMI.grandpa.cx * AMI_S) - 105, dir: -1 }, groundFn: amiGround, minX: 60, stones: [], npc: { x: Math.round(AMI.grandpa.cx * AMI_S), dir: -1 }, tv: null, stonesHud: false,
+             portals: [{ edge: 'left', to: 'daesung', x: Math.round(1672 * DS_S) - 170, dir: -1 }],   // 왼쪽 끝(계단 위) → 대성사
+             villagers: [
+               { key: 'deoksam', label: '최덕삼', talk: 'deoksam', x: AMI.deoksam.cx * AMI_S, y: AMI_TOP + AMI.deoksam.y * AMI_S, hh: AMI_H.deoksam * AMI_S, phase: 0, dir: 1 },
+               { key: 'guide', label: '문화유산 해설사', talk: 'guide', x: AMI.guide.cx * AMI_S, y: AMI_TOP + AMI.guide.y * AMI_S, hh: AMI_H.guide * AMI_S, phase: 1.7, dir: 1 },
+               { key: 'granny', label: '100세 할머니', talk: 'granny', x: AMI.granny.cx * AMI_S, y: AMI_TOP + AMI.granny.y * AMI_S, hh: AMI_H.granny * AMI_S, phase: 3.4, dir: 1 },
+             ] },
+  daesung: { bg: 'daesung', home: true, surface: 'tile', hero: 'boy', world: Math.round(1672 * DS_S), ground: 591, mul: 0.85, jumpScale: 0.9,
+             start: { x: Math.round(1672 * DS_S) - 150, dir: -1 }, minX: 50, stones: [], npc: null, tv: null, stonesHud: false,
+             portals: [{ edge: 'right', to: 'amidong', x: 100, dir: 1 }],   // 오른쪽 끝 → 아미동 왼쪽(계단 위)
+             villagers: [{ key: 'monk', label: '대성사 스님', talk: 'monk', x: 1000 * DS_S, y: 591, hh: 160 * DS_S, phase: 0, dir: 1 }] },
+  harbor: { bg: 'harbor', home: true, surface: 'tile', hero: 'boy', world: Math.round(2365 * HARB_S), ground: Math.round(488 * HARB_S), mul: 0.72, front: { key: 'harborFront', y: Math.round(455 * HARB_S) }, speedScale: 1.4, jumpScale: 0.78,
+            start: { x: Math.round(150 * HARB_S) + 105, dir: 1 }, stones: [], npc: { x: Math.round(150 * HARB_S), dir: 1, block: 'left' }, tv: null, stonesHud: false,
+            portals: [{ edge: 'right', to: 'market', x: 240, dir: 1 }] },       // 오른쪽 끝 → 국제시장 왼쪽
+  market: { bg: 'market', home: true, surface: 'tile', hero: 'boy', world: Math.round(2896 * MKT_S), ground: MKT_TOP + Math.round(472 * MKT_S), mul: 1.12, jumpScale: 1.0,
+            start: { x: 240, dir: 1 }, stones: [], npc: null, tv: null, stonesHud: false,
+            portals: [{ edge: 'left', to: 'harbor', x: Math.round(2365 * HARB_S) - 240, dir: -1 }] },   // 왼쪽 끝 → 부산항 오른쪽
+  tentschool: { bg: 'tentschool', home: true, surface: 'dirt', hero: 'boy', world: Math.round(2365 * TENT_S), ground: 658, mul: 1.0,
+                start: { x: 150, dir: 1 }, stones: [], npc: null, tv: null, stonesHud: false,
+                portals: [{ edge: 'right', to: 'bookstore', x: 150, dir: 1 }] },       // 오른쪽 끝 → 보수동 책방골목 왼쪽
+  bookstore: { bg: 'bookstore', home: true, surface: 'tile', hero: 'boy', world: Math.round(1672 * BOOK_S), ground: 531, mul: 1.0,
+               start: { x: 150, dir: 1 }, stones: [], npc: null, tv: null, stonesHud: false },
+  hospital: { bg: 'hospital', surface: 'tile', hero: 'boy', world: Math.round(1983 * HOSP_S), ground: HOSP_TOP + Math.round(436 * HOSP_S), mul: HOSP_S, start: { x: 250, dir: 1 }, stones: [],
+              npc: { x: 2300, dir: -1 }, tv: TV, stonesHud: false },
+};
+
+const STONE_ROWS = ['...OOOOO...', '..OHHLLLO..', '.OHHLLLMMO.', 'OHLLLMMMMMO', 'OLLMMMMMMSO', 'OMMMMMMSSSO', '.OSSSSSSSO.', '..OOOOOOO..'];
+const STONE_PAL = { O: '#3b3632', H: '#b3ab9f', L: '#9d968b', M: '#857e74', S: '#69635b' };
+const stoneCv = document.createElement('canvas'); stoneCv.width = 11; stoneCv.height = 8;
+{ const sc = stoneCv.getContext('2d'); STONE_ROWS.forEach((row, y) => [...row].forEach((c, x) => { if (c !== '.') { sc.fillStyle = STONE_PAL[c]; sc.fillRect(x, y, 1, 1); } })); }
+
+let M = MAPS.outdoor, H = HEROES.grandpa, WORLD = 3200;
+let items = [], villagers = [], p = {}, npc = null, cam = 0, debug = false, picked = 0, floats = [];
+let obj = { list: [], i: 0 };
+const hover = { npc: false, tv: false };
+const held = [];
+let jumpReq = -1e9, pickReq = -1e9;
+const missionEl = $('#mission'), missionText = $('#missionText'), homeBtn = $('#homeBtn');
+
+function showMissionBanner(txt) {                 // 새 미션이 시작될 때 화면 중앙에 잠시 떠오르는 안내문
+  const old = document.getElementById('missionBanner'); if (old) old.remove();
+  const el = document.createElement('div');
+  el.id = 'missionBanner';
+  el.style.cssText = 'position:absolute;left:50%;top:30%;transform:translate(-50%,-50%) scale(.94);z-index:30;'
+    + 'background:rgba(20,16,10,.86);border:2px solid #f0cf7a;border-radius:16px;padding:18px 30px;max-width:74%;'
+    + 'color:#f7ecc9;font:700 22px "Noto Sans KR",sans-serif;text-align:center;text-shadow:0 1px 3px #000;'
+    + 'box-shadow:0 8px 26px rgba(0,0,0,.5);opacity:0;transition:opacity .35s ease,transform .35s ease;pointer-events:none;';
+  el.textContent = txt;
+  (document.getElementById('stage') || document.body).appendChild(el);
+  requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translate(-50%,-50%) scale(1)'; });
+  setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translate(-50%,-50%) scale(.94)'; setTimeout(() => el.remove(), 380); }, 2000);
+}
+function setMission(txt, flash) {
+  missionText.textContent = txt; missionEl.classList.add('on');
+  if (flash) { missionEl.classList.remove('flash'); void missionEl.offsetWidth; missionEl.classList.add('flash'); }
+  showMissionBanner(txt);
+}
+const isActive = kind => { const c = obj.list[obj.i]; return !!c && c.kind === kind; };
+function completeObjective() {
+  SFX.mission();
+  obj.i++;
+  if (obj.list === AMI_OBJECTIVES) amiObjI = obj.i;
+  const nx = obj.list[obj.i];
+  if (nx) setMission(nx.mission, true); else missionEl.classList.remove('on');
+}
+
+function loadMap(cfg) {
+  if (MAPS[cfg.map].kind === 'platform') { loadPlatformMap(cfg); return; }
+  M = MAPS[cfg.map]; H = HEROES[M.hero]; GROUND = M.ground; WORLD = M.world;
+  items = M.stones.map(x => ({ kind: 'stone', x, taken: false, counted: false, fromX: x }));
+  if (cfg.map === 'amidong' || cfg.map === 'daesung') {          // 우물/비석 조각 미션: 나갔다 와도 진행 상태 유지
+    obj = { list: AMI_OBJECTIVES, i: amiObjI };
+    if (cfg.map === 'amidong') {
+      if (isActive('bucket')) items.push({ kind: 'bucket', x: BUCKET_LOST_X, taken: false, counted: false, fromX: BUCKET_LOST_X });
+      if (isActive('fragments')) AMI_FRAG_X.forEach((x, i) => { if (!amiFragTaken.ami[i]) items.push({ kind: 'frag', x, taken: false, counted: false, fromX: x, mapKey: 'ami', idx: i }); });
+    } else {
+      if (isActive('fragments')) DS_FRAG_X.forEach((x, i) => { if (!amiFragTaken.ds[i]) items.push({ kind: 'frag', x, taken: false, counted: false, fromX: x, mapKey: 'ds', idx: i }); });
+    }
+  } else {
+    obj = { list: cfg.objectives || [], i: 0 };
+  }
+  if (obj.list.some(o => o.kind === 'pickup')) items.push({ kind: 'hanky', x: HANKY_X, taken: false, counted: false, fromX: HANKY_X });
+  const rs = (cfg.resume && cfg.map === 'hospital' && hospState) ? hospState : null;   // 이전 위치에서 이어서
+  p = { x: rs ? rs.x : (cfg.spawn ? cfg.spawn.x : M.start.x), h: 0, vy: 0, dir: rs ? rs.dir : (cfg.spawn ? cfg.spawn.dir : M.start.dir), warp: false, state: 'ground', t: 0, walkT: 0, idleT: 0, pickIdx: 0, stone: null, moving: false, said: false, stepIdx: -1, sfx: false };
+  npc = M.npc ? { x: M.npc.x, dir: M.npc.dir, t: 0, box: null } : null;
+  villagers = (M.villagers || []).map(v => ({ ...v }));
+  hover.npc = hover.tv = false;
+  picked = 0; floats = []; held.length = 0; jumpReq = pickReq = -1e9; debug = false;
+  cam = rs ? rs.cam : clamp(p.x - VW / 2 + p.dir * 70, 0, WORLD - VW);
+  missionEl.classList.remove('mission-tr');
+  const first = obj.list[0];
+  if (first) setMission(first.mission, false); else missionEl.classList.remove('on');
+  homeBtn.classList.toggle('on', !!M.home);   // 돌 줍는 야외 화면에서만 '시작 화면으로' 버튼 표시
+  canvas.style.cursor = 'default';
+}
+
+function warpTo(pt) {              // 화면이 어두워지면서 다른 맵의 정해진 자리에 손자가 등장
+  p.warp = true; held.length = 0;
+  pendingField = { map: pt.to, objectives: [], resume: false, spawn: { x: pt.x, dir: pt.dir } };
+  go('field');
+}
+function findItem() {
+  let best = null, bd = 1e9;
+  const reach = REACH * M.mul;
+  for (const s of items) {
+    if (s.taken) continue;
+    const dx = (s.x - p.x) * p.dir;
+    if (dx >= -8 && dx <= reach && dx < bd) { bd = dx; best = s; }
+  }
+  return best;
+}
+function startPickup() {
+  const s = findItem();
+  if (!s && !H.emptyPick) { SFX.blocked(); floats.push({ x: p.x, y: groundAt(p.x) - 225, txt: '주울 게 없어요', t: 0, life: 1.1 }); return; }
+  p.state = 'pickup'; p.t = 0; p.pickIdx = 0; p.said = false; p.sfx = false;
+  p.stone = s; if (s) s.fromX = s.x;
+}
+function stepPickup(dt) {
+  p.t += dt;
+  const T = H.pickT;
+  let idx = T.length, acc = 0;
+  for (let i = 0; i < T.length; i++) { if (p.t < acc + T[i]) { idx = i; break; } acc += T[i]; }
+  const s = p.stone, ct = H.collectT || (T[0] + T[1] + T[2]);
+  if (idx >= 2 && !p.sfx) { p.sfx = true; SFX.rustle(s ? s.kind : 'none'); }   // 손이 바닥에 닿는 순간
+  if (idx >= T.length) { if (s) s.taken = true; p.stone = null; p.state = 'ground'; p.walkT = 0; p.idleT = 0; return; }
+  if (s) {
+    const target = p.x + p.dir * heroItemDx();
+    if (idx === 0) { const k = Math.min(1, p.t / T[0]); s.x = s.fromX + (target - s.fromX) * (1 - (1 - k) * (1 - k)); }
+    else s.x = target;
+    if (p.t >= ct && !s.counted) {
+      s.counted = true; SFX.get(s.kind);
+      if (s.kind === 'stone') { picked++; floats.push({ x: p.x, y: groundAt(p.x) - 235, txt: '돌 +1', t: 0, life: 1.0 }); }
+      else if (s.kind === 'bucket') { floats.push({ x: p.x, y: groundAt(p.x) - 262, txt: '양동이를 주웠다', t: 0, life: 1.5 }); completeObjective(); }
+      else if (s.kind === 'frag') {
+        amiFragCount++;
+        if (s.mapKey) amiFragTaken[s.mapKey][s.idx] = true;
+        floats.push({ x: p.x, y: groundAt(p.x) - 262, txt: `비석 조각 ${amiFragCount} / 5`, t: 0, life: 1.5 });
+        if (amiFragCount >= 5) completeObjective();
+      }
+      else { floats.push({ x: p.x, y: groundAt(p.x) - 262, txt: '손수건을 주웠다', t: 0, life: 1.5 }); completeObjective(); }
+    }
+  } else if (p.t >= ct && !p.said) {
+    p.said = true; floats.push({ x: p.x, y: groundAt(p.x) - 250, txt: '주울 게 없어요', t: 0, life: 1.1 });
+  }
+  p.pickIdx = idx;
+}
+function update(dt) {
+  if (M.kind === 'platform') { updatePlatform(dt); return; }
+  const now = performance.now();
+  const move = (held.length && !p.warp) ? held[held.length - 1] : 0;
+  p.moving = false;
+  if (p.state === 'pickup') stepPickup(dt);
+  else {
+    if (move) { p.dir = move; p.x += move * heroSpeed() / (1 + 0.22 * slopeAt(p.x)) * dt; p.moving = true; }   // 오르막에서는 조금 느리게
+    let lo = M.minX || 70, hi = WORLD - 70;
+    if (npc) { if (M.npc.block === 'left') lo = Math.max(lo, npc.x + 90); else hi = npc.x - 90; }   // 할아버지 쪽으로는 지나갈 수 없음
+    p.x = clamp(p.x, lo, hi);
+    if (!p.warp && M.portals) {                                                                    // 맵 끝에 닿으면 다음 맵으로
+      for (const pt of M.portals) {
+        if ((pt.edge === 'right' && move > 0 && p.x >= WORLD - 72) || (pt.edge === 'left' && move < 0 && p.x <= (M.minX || 70) + 2)) { warpTo(pt); break; }
+      }
+    }
+    const actionable = p.state === 'ground' || (p.state === 'land' && p.t > 0.05);
+    if (actionable) {
+      if (now - pickReq < 150) { pickReq = -1e9; startPickup(); }
+      else if (now - jumpReq < 150) { jumpReq = -1e9; p.state = 'prep'; p.t = 0; }
+    }
+    if (p.state === 'prep') { p.t += dt; if (p.t >= PREP) { p.state = 'air'; p.vy = H.jumpV * (M.jumpScale || 1); p.h = 0.01; SFX.jump(); } }
+    else if (p.state === 'air') { p.vy -= GRAVITY * dt; p.h += p.vy * dt; if (p.h <= 0 && p.vy < 0) { p.h = 0; p.vy = 0; p.state = 'land'; p.t = 0; SFX.land(M.surface); } }
+    else if (p.state === 'land') { p.t += dt; if (p.t >= LAND) p.state = 'ground'; }
+  }
+  if (p.state === 'ground') {
+    if (p.moving) {
+      p.walkT += dt; p.idleT = 0;
+      const n = SPR[H.key].walk.length, wi = Math.floor(p.walkT / H.walkT) % n;   // 발이 바닥에 닿는 프레임마다 발소리
+      if (wi !== p.stepIdx && (H.stepFrames ? H.stepFrames.includes(wi) : wi % (n / 2) === 0)) SFX.step(M.surface);
+      p.stepIdx = wi;
+    } else { p.idleT += dt; p.walkT = 0; p.stepIdx = -1; }
+  }
+  if (npc) npc.t += dt;
+  for (let i = floats.length - 1; i >= 0; i--) { floats[i].t += dt; if (floats[i].t > floats[i].life) floats.splice(i, 1); }
+  const target = clamp(p.x - VW / 2 + p.dir * 70, 0, WORLD - VW);
+  cam += (target - cam) * Math.min(1, dt * 5);
+}
+function idleAt(t) {
+  const tl = H.idleTL; let total = 0; for (const s of tl) total += s[1];
+  let u = t % total;
+  for (const [f, d] of tl) { if (u < d) return f; u -= d; }
+  return tl[0][0];
+}
+function currentFrame() {
+  const sp = SPR[H.key];
+  switch (p.state) {
+    case 'pickup': return ['pick', p.pickIdx];
+    case 'prep': return ['jump', 0];
+    case 'air': return ['jump', p.vy > 0 ? 1 : 2];
+    case 'land': return ['idle', 0];       // 점프 마지막 프레임은 쓰지 않고 바로 서서 대기
+    default:
+      return p.moving
+        ? ['walk', Math.floor(p.walkT / H.walkT) % sp.walk.length]
+        : ['idle', H.idleTL ? idleAt(p.idleT) : IDLE_SEQ[Math.floor(p.idleT / H.idleT) % IDLE_SEQ.length]];
+  }
+}
+
+/* ── 배경 그리기 ── */
+function fhash(x, y) { let h = (Math.imul(x, 374761393) + Math.imul(y, 668265263)) ^ 0x5bd1e995; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+function hills(off, base, amp, color, seed) {
+  ctx.fillStyle = color;
+  const start = Math.floor(off / 4) * 4;
+  for (let wx = start; wx < off + VW + 4; wx += 4) {
+    const n = Math.sin(wx * 0.0045 + seed) * 0.5 + Math.sin(wx * 0.0121 + seed * 2.3) * 0.3 + Math.sin(wx * 0.0273 + seed * 4.1) * 0.2;
+    const y = Math.round((base - amp * (n * 0.5 + 0.5)) / 4) * 4;
+    ctx.fillRect(Math.round(wx - off), y, 4, GROUND - y);
+  }
+}
+const GRASS_TOP = 560, PATH_TOP = 588;
+function drawOutdoor(c) {
+  const g = ctx.createLinearGradient(0, 0, 0, GROUND);
+  g.addColorStop(0, '#aebfbb'); g.addColorStop(0.55, '#e6dfc8'); g.addColorStop(1, '#f2dfb8');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, VW, GROUND);
+  ctx.fillStyle = '#f7ecc9'; ctx.beginPath(); ctx.arc(930 - c * 0.04, 190, 70, 0, Math.PI * 2); ctx.fill();
+  hills(c * 0.15, 430, 70, '#a9b8ae', 1.3); hills(c * 0.35, 495, 56, '#8fa291', 4.1); hills(c * 0.60, 548, 36, '#788c7b', 7.7);
+  ctx.fillStyle = '#7f9a62'; ctx.fillRect(0, GRASS_TOP, VW, PATH_TOP - GRASS_TOP);
+  ctx.fillStyle = '#b59d76'; ctx.fillRect(0, PATH_TOP, VW, VH - PATH_TOP);
+  ctx.fillStyle = '#9a845e'; ctx.fillRect(0, PATH_TOP, VW, 4);
+  const t0 = Math.floor(c / 8);
+  for (let i = 0; i <= VW / 8 + 1; i++) {
+    const tx = t0 + i, sx = tx * 8 - c;
+    for (let y = GRASS_TOP; y < PATH_TOP; y += 8) { const r = fhash(tx, y); if (r < 0.22) { ctx.fillStyle = '#6c8753'; ctx.fillRect(sx, y + 2, 4, 6); } else if (r < 0.34) { ctx.fillStyle = '#93ad72'; ctx.fillRect(sx + 2, y + 4, 4, 4); } }
+    for (let y = PATH_TOP + 4; y < VH; y += 8) { const r = fhash(tx, y + 999); if (r < 0.16) { ctx.fillStyle = '#a68f68'; ctx.fillRect(sx, y, 8, 4); } else if (r < 0.26) { ctx.fillStyle = '#c4ad84'; ctx.fillRect(sx, y, 4, 4); } else if (r < 0.29) { ctx.fillStyle = '#8f7b5b'; ctx.fillRect(sx, y, 8, 4); } }
+  }
+  const f0 = Math.floor((c - 20) / 360);
+  for (let i = f0; i * 360 - c < VW + 20; i++) {
+    const wx = i * 360 + 200 - c;
+    if (fhash(i, 55) > 0.28) { ctx.fillStyle = '#7a664d'; ctx.fillRect(wx, GRASS_TOP - 6, 360, 5); ctx.fillRect(wx, GRASS_TOP + 12, 360, 5); }
+    ctx.fillStyle = '#5f4e39'; ctx.fillRect(wx - 5, GRASS_TOP - 26, 10, 50); ctx.fillStyle = '#7a664d'; ctx.fillRect(wx - 5, GRASS_TOP - 26, 10, 6);
+  }
+}
+function drawHospital(c) {
+  ctx.fillStyle = '#050608'; ctx.fillRect(0, 0, VW, VH);
+  if (roomCv) ctx.drawImage(roomCv, c, 0, VW, roomCv.height, 0, HOSP_TOP, VW, roomCv.height);
+}
+
+
+function drawAmidong(c) {
+  ctx.fillStyle = '#0a0e12'; ctx.fillRect(0, 0, VW, VH);
+  if (amiCv) ctx.drawImage(amiCv, c, 0, VW, amiCv.height, 0, AMI_TOP, VW, amiCv.height);
+  if (hover.well) drawHoverGlow(WELL.l - c - 4, WELL.r - c + 4, WELL.t - 4, WELL.b + 4, true);
+  if (hover.toilet) drawHoverGlow(TOILET.l - c - 4, TOILET.r - c + 4, TOILET.t - 4, TOILET.b + 4, true);
+  if (amiBucketReady) {
+    const sx = BUCKET_UP_X - c, w = 40, h = Math.round(w * bucketUpImg.naturalHeight / bucketUpImg.naturalWidth);
+    ctx.fillStyle = 'rgba(12,16,30,0.30)'; ctx.beginPath(); ctx.ellipse(sx, GROUND + 5, 24, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.drawImage(bucketUpImg, sx - w / 2, GROUND + 6 - h, w, h);
+  }
+}
+function drawHarbor(c) {
+  ctx.fillStyle = '#0a1420'; ctx.fillRect(0, 0, VW, VH);
+  const cv = bigMap.harbor; if (cv) ctx.drawImage(cv, c, 0, VW, Math.min(VH, cv.height), 0, 0, VW, Math.min(VH, cv.height));
+}
+function drawMarket(c) {
+  ctx.fillStyle = '#0a0d12'; ctx.fillRect(0, 0, VW, VH);
+  const cv = bigMap.market; if (cv) ctx.drawImage(cv, c, 0, VW, cv.height, 0, MKT_TOP, VW, cv.height);
+}
+function drawDaesung(c) {
+  ctx.fillStyle = '#0a1210'; ctx.fillRect(0, 0, VW, VH);
+  const cv = bigMap.daesung; if (cv) ctx.drawImage(cv, c, 0, VW, cv.height, 0, DS_TOP, VW, cv.height);
+  if (hover.wiryeongbi) drawHoverGlow(WIRYEONGBI.l - c - 4, WIRYEONGBI.r - c + 4, WIRYEONGBI.t - 4, WIRYEONGBI.b + 4, true);
+}
+function drawTentschool(c) {
+  ctx.fillStyle = '#0a1420'; ctx.fillRect(0, 0, VW, VH);
+  const cv = bigMap.tentschool; if (cv) ctx.drawImage(cv, c, 0, VW, Math.min(VH, cv.height), 0, 0, VW, Math.min(VH, cv.height));
+}
+function drawBookstore(c) {
+  ctx.fillStyle = '#0a1210'; ctx.fillRect(0, 0, VW, VH);
+  const cv = bigMap.bookstore; if (cv) ctx.drawImage(cv, c, 0, VW, cv.height, 0, BOOK_TOP, VW, cv.height);
+}
+function drawStone(sx) {
+  ctx.fillStyle = 'rgba(40,32,22,0.22)'; ctx.beginPath(); ctx.ellipse(sx, GROUND + 3, 19, 5, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.save(); ctx.imageSmoothingEnabled = false; ctx.drawImage(stoneCv, Math.round(sx - 16), GROUND + 3 - 24, 33, 24); ctx.restore();
+}
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function keycap(x, y, label) {
+  ctx.font = FONT(17, 700);
+  const w = Math.max(30, ctx.measureText(label).width + 20);
+  ctx.fillStyle = '#f3ead3'; rr(x, y, w, 30, 7); ctx.fill();
+  ctx.fillStyle = '#c9b98f'; ctx.fillRect(x + 4, y + 27, w - 8, 3);
+  ctx.fillStyle = '#2f2a24'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, x + w / 2, y + 14);
+  return w;
+}
+
+function drawItem(it, sx) {
+  if (it.kind === 'stone') { drawStone(sx); return; }
+  const img = it.kind === 'bucket' ? bucketDownImg : it.kind === 'frag' ? fragImg : hankyImg;
+  const w = it.kind === 'bucket' ? 46 : it.kind === 'frag' ? 40 : 54, h = Math.round(w * img.naturalHeight / img.naturalWidth);
+  const t = performance.now() / 1000;
+  ctx.save();                                     // 눈에 잘 띄도록 은은하게 깜빡이는 빛
+  ctx.globalAlpha = 0.38 + 0.22 * Math.sin(t * 3);
+  const g = ctx.createRadialGradient(sx, GROUND + 4, 4, sx, GROUND + 4, 60);
+  g.addColorStop(0, 'rgba(255,228,160,.95)'); g.addColorStop(1, 'rgba(255,228,160,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(sx, GROUND + 4, 62, 20, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = 'rgba(12,16,30,0.30)'; ctx.beginPath(); ctx.ellipse(sx, GROUND + 5, 30, 6, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.drawImage(img, sx - w / 2, GROUND + 7 - h, w, h);
+}
+function drawHUD() {
+  ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+  if (M.stonesHud) {
+    const total = items.filter(i => i.kind === 'stone').length;
+    ctx.fillStyle = 'rgba(38,33,27,0.80)'; rr(28, 24, 190, 70, 12); ctx.fill();
+    ctx.fillStyle = '#cdbf9c'; ctx.font = FONT(16, 500); ctx.fillText('주운 돌', 46, 50);
+    ctx.fillStyle = '#f3ead3'; ctx.font = FONT(30, 700); ctx.fillText(`${picked} / ${total}`, 46, 82);
+  }
+  if (touchOn) return;   // 터치 버튼이 있으면 키보드 안내는 숨김
+  ctx.fillStyle = 'rgba(38,33,27,0.80)'; rr(28, VH - 66, 560, 44, 12); ctx.fill();
+  let x = 44; const y = VH - 59;
+  const item = (keys, label) => { for (const k of keys) x += keycap(x, y, k) + 6; ctx.font = FONT(17, 500); ctx.fillStyle = '#e8dfc6'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(label, x + 2, y + 14); x += ctx.measureText(label).width + 26; };
+  item(['←', '→'], '이동'); item(['Z'], '줍기'); item(['Space'], '점프'); item(['D'], '기준선');
+}
+function drawDebug(sx, sy, f, s) {
+  ctx.save(); ctx.lineWidth = 1;
+  ctx.strokeStyle = '#ff3b30'; ctx.beginPath(); ctx.moveTo(0, GROUND + 0.5); ctx.lineTo(VW, GROUND + 0.5); ctx.stroke();
+  const left = sx - (p.dir > 0 ? f.ax : f.w - f.ax) * s;
+  ctx.strokeStyle = '#2e7dff'; ctx.strokeRect(Math.round(left) + 0.5, Math.round(sy - f.ay * s) + 0.5, Math.round(f.w * s), Math.round(f.h * s));
+  ctx.strokeStyle = '#ff3b30'; ctx.beginPath(); ctx.moveTo(sx - 10.5, sy + 0.5); ctx.lineTo(sx + 10.5, sy + 0.5); ctx.moveTo(sx + 0.5, sy - 12); ctx.lineTo(sx + 0.5, sy + 12); ctx.stroke();
+  ctx.fillStyle = '#ff3b30'; ctx.font = FONT(15, 600); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  const [a, i] = currentFrame(); ctx.fillText(`${p.state}  ${a}[${i}]  x=${Math.round(p.x)}  h=${Math.round(p.h)}`, 240, 48);
+  ctx.restore();
+}
+
+
+// "말 걸기" 같은 클릭 안내 표시
+function drawMarker(cx, ty, label, hot) {
+  ctx.font = FONT(18, 700);
+  const w = ctx.measureText(label).width + 30;
+  ctx.fillStyle = hot ? '#f0cf7a' : 'rgba(30,25,19,0.92)'; rr(cx - w / 2, ty - 30, w, 32, 8); ctx.fill();
+  ctx.lineWidth = 2; ctx.strokeStyle = '#b8924a'; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx - 8, ty + 1); ctx.lineTo(cx + 8, ty + 1); ctx.lineTo(cx, ty + 11); ctx.closePath();
+  ctx.fillStyle = hot ? '#f0cf7a' : '#b8924a'; ctx.fill();
+  ctx.fillStyle = hot ? '#2a2218' : '#f1e7cc'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, cx, ty - 13);
+}
+function drawNPC(c, snap) {
+  if (!npc) return;
+  const fr = SPR.grandpa.idle[IDLE_SEQ[Math.floor(npc.t / 0.24) % IDLE_SEQ.length]];
+  const s = HEROES.grandpa.base * M.mul * NPC_SCALE;
+  const sx = Math.round(npc.x - c);
+  if (sx < -250 || sx > VW + 250) { npc.box = null; return; }
+  const active = isActive('npc');
+  ctx.fillStyle = 'rgba(12,16,30,0.32)'; ctx.beginPath(); ctx.ellipse(sx, GROUND + 1, 62 * M.mul * NPC_SCALE, 9 * M.mul, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.save(); ctx.translate(sx, GROUND);
+  if (npc.dir < 0) ctx.scale(-1, 1);
+  if (active && hover.npc && !snap) { ctx.shadowColor = 'rgba(255,214,120,0.95)'; ctx.shadowBlur = 24; }
+  ctx.drawImage(fr.img, -fr.ax * s, -fr.ay * s, fr.w * s, fr.h * s);
+  ctx.restore();
+  const left = sx - (npc.dir > 0 ? fr.ax : fr.w - fr.ax) * s, top = GROUND - fr.ay * s;
+  npc.box = { l: left, t: top, r: left + fr.w * s, b: GROUND };
+  if (!snap && active) drawMarker(Math.round((npc.box.l + npc.box.r) / 2), top - 34 + Math.sin(performance.now() / 260) * 4, '말 걸기', hover.npc);
+}
+function drawHoverGlow(l, r, t2, b, hot) {         // 클릭 가능한 대상 전체에 쓰는 공용 반짝임(테두리)
+  if (!hot) return;
+  const t = performance.now() / 1000, a = 0.55 + 0.35 * Math.sin(t * 5);
+  ctx.save();
+  ctx.strokeStyle = `rgba(240,207,122,${a})`; ctx.lineWidth = 3; ctx.shadowColor = 'rgba(240,207,122,.9)'; ctx.shadowBlur = 14;
+  rr(l, t2, r - l, b - t2, 12); ctx.stroke();
+  ctx.restore();
+}
+function drawVillager(v, c) {          // 주민(NPC): 가만히 서서 숨 쉬듯 살짝 움직임, 이름표
+  const t = performance.now() / 1000;
+  const sx = Math.round(v.x - c);
+  if (sx < -260 || sx > VW + 260) return;
+  const f = VIL[v.key], s = v.hh / f.ay;
+  const hotV = hover.villager === v;
+  ctx.fillStyle = 'rgba(20,26,20,0.30)'; ctx.beginPath(); ctx.ellipse(sx, v.y + 1, f.w * s * 0.26, 8 * M.mul, 0, 0, Math.PI * 2); ctx.fill();
+  if (hotV) { const b = villagerBox(v); drawHoverGlow(b.l - c - 4, b.r - c + 4, b.t + 26, b.b - 2, true); }
+  ctx.save(); ctx.translate(sx, v.y); ctx.scale(v.dir < 0 ? -1 : 1, 1 + 0.007 * Math.sin(t * 1.9 + v.phase));
+  ctx.drawImage(f.img, -f.ax * s, -f.ay * s, f.w * s, f.h * s); ctx.restore();
+  if (v.label) {
+    const hot = hotV;
+    ctx.font = FONT(14, 700); const tw = ctx.measureText(v.label).width;
+    const bx = sx - tw / 2 - 10, by = v.y - v.hh - 26, bw = tw + 20, bh = 22;
+    ctx.fillStyle = hot ? 'rgba(58,46,26,0.92)' : 'rgba(28,23,17,0.82)'; rr(bx, by, bw, bh, 10); ctx.fill();
+    ctx.lineWidth = 1.4; ctx.strokeStyle = hot ? '#f0cf7a' : 'rgba(240,207,122,0.55)'; rr(bx, by, bw, bh, 10); ctx.stroke();
+    ctx.fillStyle = '#f1e7cc'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(v.label, sx, by + bh / 2 + 1);
+  }
+}
+function villagerBox(v) {            // 클릭 판정 범위 (그려지는 그림 그대로)
+  const f = VIL[v.key], s = v.hh / f.ay;
+  const l = v.x - f.ax * s, r = l + f.w * s, top = v.y - v.hh - 30, bot = v.y + 4;
+  return { l, r, t: top, b: bot };
+}
+function drawTV(c, snap) {          // 클릭해야 할 때만 TV가 은은하게 빛남
+  if (!M.tv || snap || !isActive('tv')) return;
+  const x = TV.l - c, y = TV.t, w = TV.r - TV.l, h = TV.b - TV.t;
+  if (x > VW + 60 || x + w < -60) return;
+  const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 320);
+  ctx.save();
+  ctx.shadowColor = 'rgba(255,214,120,0.95)'; ctx.shadowBlur = hover.tv ? 26 : 8 + 10 * pulse;
+  ctx.lineWidth = hover.tv ? 4 : 3; ctx.strokeStyle = hover.tv ? '#ffe3a3' : `rgba(240,207,122,${0.5 + 0.4 * pulse})`;
+  rr(x, y, w, h, 8); ctx.stroke();
+  if (hover.tv) { ctx.fillStyle = 'rgba(255,225,160,0.16)'; ctx.fill(); }
+  ctx.restore();
+  drawMarker(Math.round(x + w / 2), y - 10 + Math.sin(performance.now() / 260) * 4, 'TV 보기', hover.tv);
+}
+
+function draw(snap = false) {
+  if (M.kind === 'platform') { drawPlatformScene(snap); return; }
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  const c = Math.round(cam);
+  ({ outdoor: drawOutdoor, hospital: drawHospital, amidong: drawAmidong, harbor: drawHarbor, market: drawMarket, daesung: drawDaesung, tentschool: drawTentschool, bookstore: drawBookstore })[M.bg](c);
+  drawTV(c, snap);
+  for (const s of items) {
+    if (s.taken) continue;
+    if (p.state === 'pickup' && p.stone === s) continue;
+    drawItem(s, Math.round(s.x - c));
+  }
+  const gy = groundAt(p.x);                                   // 지금 서 있는 곳의 땅 높이 (계단이면 위로)
+  const sx = Math.round(p.x - c), sy = Math.round(gy - p.h);
+  const sh = clamp(1 - p.h / 320, 0.45, 1);
+  const [anim, idx] = currentFrame();
+  const f = SPR[H.key][anim][idx], s = H.base * M.mul * H.animScale[anim] * (f.sc || 1);   // f.sc: 프레임마다 크기를 맞춘 보정값
+  const drawHero = () => {
+    ctx.fillStyle = M === MAPS.hospital ? `rgba(12,16,30,${0.32 * sh})` : `rgba(40,32,22,${0.26 * sh})`;
+    ctx.beginPath(); ctx.ellipse(sx, gy + 1, 50 * sh * M.mul, 8 * sh * M.mul, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.save(); ctx.translate(sx, sy); if (p.dir < 0) ctx.scale(-1, 1);
+    ctx.drawImage(f.img, -f.ax * s, -f.ay * s, f.w * s, f.h * s); ctx.restore();
+    if (p.state === 'pickup' && p.stone && !p.stone.counted && p.pickIdx < H.bakedAt) drawItem(p.stone, Math.round(p.stone.x - c));
+  };
+  // 발 위치(y)가 위쪽인 것부터 그려서, 계단 위에 있으면 아래쪽 주민 뒤로 가려짐
+  const order = villagers.map(v => ({ y: v.y, fn: () => drawVillager(v, c) }));
+  if (npc) order.push({ y: GROUND, fn: () => drawNPC(c, snap) });
+  order.push({ y: gy + 0.5, fn: drawHero });
+  order.sort((a, b) => a.y - b.y).forEach(o => o.fn());
+  if (M.front && bigMap[M.front.key]) { const fc = bigMap[M.front.key]; ctx.drawImage(fc, c, 0, VW, fc.height, 0, M.front.y, VW, fc.height); }   // 말뚝·블록이 다리를 가림
+  if (!snap && (p.state === 'ground' || p.state === 'land') && p.h === 0) { const s2 = findItem(); if (s2) keycap(Math.round(s2.x - c) - 15, GROUND - 78, 'Z'); }
+  if (snap) return;
+  for (const fl of floats) {
+    const k = fl.t / fl.life;
+    ctx.globalAlpha = 1 - k * k; ctx.font = FONT(26, 700); ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(38,33,27,0.85)'; ctx.lineJoin = 'round';
+    const tx = Math.round(fl.x - c), ty = Math.round(fl.y - k * 36);
+    ctx.strokeText(fl.txt, tx, ty); ctx.fillStyle = '#f7ecc9'; ctx.fillText(fl.txt, tx, ty); ctx.globalAlpha = 1;
+  }
+  if (debug) drawDebug(sx, sy, f, s);
+  drawHUD();
+}
+
+
+/* ─────────── 챕터1 점프맵: 아미동 언덕 오르기 (업은 캐릭터) ─────────── */
+function loadPlatformMap(cfg) {
+  M = MAPS.aminjump; H = HEROES.piggy;
+  const st = AMINJUMP.start;
+  goalPlat = AMINJUMP.goal;
+  p = { x: st.x + st.w / 2, y: st.y, vy: 0, dir: -1, state: 'ground', moving: false, walkT: 0, idleT: 0, pickIdx: -1, curPlat: st, onGoal: false };
+  items = []; villagers = []; npc = null; obj = { list: [], i: 0 };
+  picked = 0; floats = []; held.length = 0; jumpReq = pickReq = -1e9; debug = false;
+  cam = clamp(p.x - VW / 2, 0, AMINJUMP.world - VW);
+  missionEl.classList.add('mission-tr');   // 이 맵에서만 오른쪽 위
+  setMission('언덕을 올라 도착 지점까지 가자', false);
+  homeBtn.classList.add('on');
+  canvas.style.cursor = 'default';
+  updateTouch();
+}
+function platformSupports(plat, x) {                    // 지금 밟고 있는 발판 위에 아직 발이 있는지
+  return !!plat && x >= plat.x - PIGGY.footPad && x <= plat.x + plat.w + PIGGY.footPad;
+}
+function findLanding(x, y0, y1) {                        // 내려오는 길에 어떤 발판을 밟는지
+  let best = null;
+  for (const plat of [...AMINJUMP.platforms, AMINJUMP.start, goalPlat]) {
+    if (x < plat.x - PIGGY.footPad || x > plat.x + plat.w + PIGGY.footPad) continue;
+    if (plat.y >= y0 - 2 && plat.y <= y1 + 2 && (!best || plat.y < best.y)) best = plat;
+  }
+  return best;
+}
+function resetPiggy() {                                  // 타일이 아닌 곳으로 떨어지면 처음 자리로
+  const st = AMINJUMP.start;
+  p.x = st.x + st.w / 2; p.y = st.y; p.vy = 0; p.state = 'ground'; p.curPlat = st; p.onGoal = false; p.dir = -1;
+  floats.push({ x: p.x, y: st.y - 210, txt: '다시 시작 지점에서!', t: 0, life: 1.4 });
+  SFX.blocked();
+}
+function finishAminjump() {                              // 도착 지점에서 Space → 아미동 비석마을 맵으로 (원래 시작 지점: 오른쪽, 할아버지 옆)
+  pendingField = { map: 'amidong', objectives: [], resume: false };
+  go('field');
+}
+function startPiggyPick() {                              // Z: 몸을 낮춰 무언가를 줍고 다시 일어남 (연출용 동작)
+  p.state = 'pickup'; p.t = 0; p.pickIdx = 0; SFX.rustle('stone');
+}
+function stepPiggyPick(dt) {
+  p.t += dt;
+  const T = PIGGY.pickT;
+  let idx = T.length, acc = 0;
+  for (let i = 0; i < T.length; i++) { if (p.t < acc + T[i]) { idx = i; break; } acc += T[i]; }
+  if (idx >= T.length) { p.state = 'ground'; p.idleT = 0; return; }
+  if (idx === 2 && p.pickIdx !== 2) SFX.get('stone');   // 웅크려 손이 닿는 순간
+  p.pickIdx = idx;
+}
+function updatePlatform(dt) {
+  if (p.state === 'pickup') { stepPiggyPick(dt); for (let i = floats.length - 1; i >= 0; i--) { floats[i].t += dt; if (floats[i].t > floats[i].life) floats.splice(i, 1); } return; }
+  const move = held.length ? held[held.length - 1] : 0;
+  p.moving = false;
+  if (move) { p.dir = move; p.x += move * PIGGY.speed * dt; p.moving = true; }
+  p.x = clamp(p.x, 24, AMINJUMP.world - 24);
+  const now = performance.now();
+  if (p.state === 'ground') {
+    if (now - jumpReq < 150) {
+      jumpReq = -1e9;
+      if (p.onGoal) { finishAminjump(); return; }
+      p.vy = -PIGGY.jumpV; p.state = 'air'; SFX.jump();
+    } else if (now - pickReq < 150) {
+      pickReq = -1e9; startPiggyPick(); return;
+    } else if (!platformSupports(p.curPlat, p.x)) {
+      p.state = 'air'; p.vy = 0;                                                  // 발판 가장자리를 벗어나면 그대로 떨어지기 시작
+    }
+  }
+  if (p.state === 'air') {
+    p.vy += PIGGY.gravity * dt;
+    const ny = p.y + p.vy * dt;
+    if (p.vy > 0) {
+      const land = findLanding(p.x, p.y, ny);
+      if (land) {
+        const wasGoal = p.onGoal;
+        p.y = land.y; p.vy = 0; p.state = 'ground'; p.curPlat = land; p.onGoal = (land === goalPlat);
+        if (p.onGoal && !wasGoal) SFX.mission(); else SFX.land('dirt');
+      } else p.y = ny;
+    } else p.y = ny;
+  }
+  if (p.y > VH + 60) resetPiggy();
+  if (p.moving) { p.walkT += dt; p.idleT = 0; } else { p.idleT += dt; p.walkT = 0; }
+  for (let i = floats.length - 1; i >= 0; i--) { floats[i].t += dt; if (floats[i].t > floats[i].life) floats.splice(i, 1); }
+  const target = clamp(p.x - VW / 2, 0, AMINJUMP.world - VW);
+  cam += (target - cam) * Math.min(1, dt * 5);          // 다른 맵과 같은 방식으로 부드럽게 좌우 스크롤
+}
+function piggyFrame() {                                  // 호들갑스럽지 않게: 대기는 느긋하게, 공중은 자세만 5단계
+  const sp = SPR.piggy;
+  if (p.state === 'pickup') {
+    const T = PIGGY.pickT, i = p.pickIdx;
+    if (i < 3) return ['crouch', i];
+    if (i < 5) return ['stand', i - 2];
+    return ['idle', 0];
+  }
+  if (p.state === 'air') {
+    const n = sp.jump.length;
+    let idx = p.vy < -260 ? 0 : p.vy < 0 ? 1 : p.vy < 220 ? 2 : p.vy < 480 ? Math.min(3, n - 1) : n - 1;
+    return ['jump', idx];
+  }
+  return p.moving ? ['walk', Math.floor(p.walkT / 0.14) % sp.walk.length] : ['idle', Math.floor(p.idleT / 0.85) % sp.idle.length];
+}
+function drawPlatformScene(snap) {
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  const c = Math.round(cam);
+  const cv = bigMap.aminjump;
+  if (cv) ctx.drawImage(cv, c, 0, VW, cv.height, 0, 0, VW, cv.height); else { ctx.fillStyle = '#101418'; ctx.fillRect(0, 0, VW, VH); }
+  for (const plat of [...AMINJUMP.platforms, AMINJUMP.start, goalPlat]) {
+    const dw = plat.drawW || plat.w, dx = (plat.drawX ?? plat.x) - c;   // 도착 지점처럼 보이는 크기와 실제 착지 판정 범위가 다를 수 있음
+    if (dx + dw < -40 || dx > VW + 40) continue;
+    const img = AMINJUMP_TILES[plat.tile];
+    if (!img) continue;
+    const topY = plat.y - plat.h * plat.frac;
+    ctx.fillStyle = 'rgba(20,16,10,0.22)'; ctx.beginPath(); ctx.ellipse(dx + dw / 2, plat.y + 3, dw * 0.42, 7, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.drawImage(img, dx, topY, dw, plat.h);
+  }
+  const [anim, idx] = piggyFrame();
+  const f = SPR.piggy[anim][idx], s = HEROES.piggy.base;
+  const sx = Math.round(p.x - c), sy = Math.round(p.y);
+  ctx.fillStyle = 'rgba(20,16,10,0.26)'; ctx.beginPath(); ctx.ellipse(sx, sy + 1, 32, 7, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.save(); ctx.translate(sx, sy); if (p.dir < 0) ctx.scale(-1, 1);
+  ctx.drawImage(f.img, -f.ax * s, -f.ay * s, f.w * s, f.h * s); ctx.restore();
+  if (snap) return;
+  if (p.onGoal && p.state === 'ground') {
+    const g = goalPlat, gw = g.drawW || g.w, gx = (g.drawX ?? g.x);
+    drawMarker(Math.round(gx + gw / 2 - c), g.y - g.h * g.frac - 30 + Math.sin(performance.now() / 260) * 4, 'Space로 이동', true);
+  }
+  for (const fl of floats) {
+    const k = fl.t / fl.life;
+    ctx.globalAlpha = 1 - k * k; ctx.font = FONT(24, 700); ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(38,33,27,0.85)'; ctx.lineJoin = 'round';
+    const tx = Math.round(fl.x - c), ty = Math.round(fl.y - k * 34);
+    ctx.strokeText(fl.txt, tx, ty); ctx.fillStyle = '#f7ecc9'; ctx.fillText(fl.txt, tx, ty); ctx.globalAlpha = 1;
+  }
+  if (debug) {
+    ctx.save(); ctx.lineWidth = 2; ctx.strokeStyle = '#ff3b30';
+    for (const plat of [...AMINJUMP.platforms, AMINJUMP.start, goalPlat]) ctx.strokeRect(plat.x - c + 0.5, plat.y - 3 + 0.5, plat.w, 6);
+    ctx.fillStyle = '#ff3b30'; ctx.font = FONT(15, 600); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText(`x=${Math.round(p.x)} y=${Math.round(p.y)} ${p.state} onGoal=${p.onGoal} cam=${c}`, 12, 20);
+    ctx.restore();
+  }
+  if (!touchOn) {
+    ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(38,33,27,0.80)'; rr(28, VH - 66, 300, 44, 12); ctx.fill();
+    let x = 44; const y = VH - 59;
+    const item = (keys, label) => { for (const k of keys) x += keycap(x, y, k) + 6; ctx.font = FONT(17, 500); ctx.fillStyle = '#e8dfc6'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(label, x + 2, y + 14); x += ctx.measureText(label).width + 26; };
+    item(['←', '→'], '이동'); item(['Z'], '줍기'); item(['Space'], '점프');
+  }
+}
+
+let raf = 0, lastTs = 0;
+function loop(ts) {
+  if (mode !== 'field') { raf = 0; return; }
+  let dt = (ts - lastTs) / 1000;
+  if (!(dt > 0)) dt = 0.016;            // 첫 프레임 등 시간이 거꾸로 오면 보정
+  dt = Math.min(dt, 0.05);
+  lastTs = ts; update(dt); draw();
+  raf = requestAnimationFrame(loop);
+}
+async function fieldStart() {
+  await Promise.all([framesReady, roomReady, hankyReady, bucketReady, fragReady, amiReady, vilReady, ch2Ready, ch3Ready, aminjumpBgReady, aminTilesReady]);
+  loadMap(pendingField);
+  updateTouch();
+  lastTs = performance.now();
+  if (!raf) raf = requestAnimationFrame(loop);
+  canvas.focus({ preventScroll: true });
+}
+
+homeBtn.addEventListener('click', async () => { if (busy) return; busy = true; held.length = 0; await go('title'); busy = false; });
+
+/* ─────────── 클릭 대상(할아버지·TV) → 대화 시작 (게임 화면은 그대로 멈춤) ─────────── */
+function stagePoint(e) { const r = canvas.getBoundingClientRect(); return { x: (e.clientX - r.left) * VW / r.width, y: (e.clientY - r.top) * VH / r.height }; }
+function hitNPC(e) {
+  if (!npc || !npc.box) return false;
+  const q = stagePoint(e), b = npc.box;
+  return q.x >= b.l - 8 && q.x <= b.r + 8 && q.y >= b.t - 8 && q.y <= b.b + 4;
+}
+function hitTV(e) {
+  if (!M.tv) return false;
+  const q = stagePoint(e), c = Math.round(cam);
+  return q.x >= TV.l - c - 10 && q.x <= TV.r - c + 10 && q.y >= TV.t - 10 && q.y <= TV.b + 10;
+}
+function hitVillager(e) {
+  const q = stagePoint(e), c = Math.round(cam);
+  for (const v of villagers) {
+    if (!v.label) continue;
+    const b = villagerBox(v);
+    if (q.x >= b.l - c - 10 && q.x <= b.r - c + 10 && q.y >= b.t - 6 && q.y <= b.b + 6) return v;
+  }
+  return null;
+}
+canvas.addEventListener('mousemove', e => {
+  if (mode !== 'field') return;
+  hover.npc = !!npc && isActive('npc') && hitNPC(e);
+  hover.tv = !!M.tv && isActive('tv') && hitTV(e);
+  hover.villager = hitVillager(e);
+  hover.well = hitWell(e);
+  hover.toilet = isActive('toilet') && hitToilet(e);
+  hover.wiryeongbi = isActive('wiryeongbi') && hitWiryeongbi(e);
+  canvas.style.cursor = (hover.npc || hover.tv || hover.villager || hover.well || hover.toilet || hover.wiryeongbi) ? 'pointer' : 'default';
+});
+canvas.addEventListener('mouseleave', () => { hover.npc = hover.tv = false; hover.villager = null; canvas.style.cursor = 'default'; });
+function tryTalk(kind) {   // 성공하면 true
+  const wx = kind === 'npc' ? npc.x : TV_CX;
+  if (Math.abs(p.x - wx) > 460) { SFX.blocked(); floats.push({ x: p.x, y: groundAt(p.x) - 262, txt: '조금 더 가까이 가 보자', t: 0, life: 1.3 }); return false; }
+  beginTalk();
+  return true;
+}
+function hitWell(e) {
+  if (M !== MAPS.amidong) return false;
+  const q = stagePoint(e), c = Math.round(cam);
+  return q.x >= WELL.l - c - 10 && q.x <= WELL.r - c + 10 && q.y >= WELL.t - 10 && q.y <= WELL.b + 10;
+}
+function hitToilet(e) {
+  if (M !== MAPS.amidong) return false;
+  const q = stagePoint(e), c = Math.round(cam);
+  return q.x >= TOILET.l - c - 10 && q.x <= TOILET.r - c + 10 && q.y >= TOILET.t - 10 && q.y <= TOILET.b + 10;
+}
+function hitWiryeongbi(e) {
+  if (M !== MAPS.daesung) return false;
+  const q = stagePoint(e), c = Math.round(cam);
+  return q.x >= WIRYEONGBI.l - c - 10 && q.x <= WIRYEONGBI.r - c + 10 && q.y >= WIRYEONGBI.t - 10 && q.y <= WIRYEONGBI.b + 10;
+}
+canvas.addEventListener('click', e => {
+  if (mode !== 'field') return;
+  if (M === MAPS.amidong && hitWell(e)) {
+    if (Math.abs(p.x - WELL_CX) > 460) { SFX.blocked(); floats.push({ x: p.x, y: groundAt(p.x) - 262, txt: '조금 더 가까이 가 보자', t: 0, life: 1.3 }); return; }
+    if (isActive('well1')) { SFX.click(); villagerTalk([sayL('손자', '와 이거 우물 처음봐요.')]).then(() => completeObjective()); return; }
+    if (isActive('well2')) { SFX.click(); startWellMinigame(); return; }
+    return;
+  }
+  if (M === MAPS.amidong && isActive('toilet') && hitToilet(e)) {
+    if (Math.abs(p.x - TOILET_CX) > 460) { SFX.blocked(); floats.push({ x: p.x, y: groundAt(p.x) - 262, txt: '조금 더 가까이 가 보자', t: 0, life: 1.3 }); return; }
+    SFX.click(); villagerTalk(AMI_TOILET_SCRIPT).then(() => completeObjective());
+    return;
+  }
+  if (M === MAPS.amidong && isActive('npc') && npc && hitNPC(e)) {
+    if (Math.abs(p.x - npc.x) > 460) { SFX.blocked(); floats.push({ x: p.x, y: groundAt(p.x) - 262, txt: '조금 더 가까이 가 보자', t: 0, life: 1.3 }); return; }
+    SFX.click(); villagerTalk(AMI_NPC2_SCRIPT).then(() => completeObjective());
+    return;
+  }
+  if (M === MAPS.daesung && isActive('wiryeongbi') && hitWiryeongbi(e)) {
+    if (Math.abs(p.x - WIRYEONGBI_CX) > 460) { SFX.blocked(); floats.push({ x: p.x, y: groundAt(p.x) - 262, txt: '조금 더 가까이 가 보자', t: 0, life: 1.3 }); return; }
+    SFX.click();
+    openSpellModal().then(() => { villagerTalk(AMI_MONK_DONE_SCRIPT).then(() => completeObjective()); });
+    return;
+  }
+  const v = hitVillager(e);
+  if (v && v.key === 'monk' && isActive('monk2') && Math.abs(p.x - v.x) <= 460) {
+    SFX.click();
+    villagerTalk(AMI_MONK_SCRIPT).then(() => completeObjective());
+    return;
+  }
+  if (v && v.key === 'guide' && isActive('guide2') && Math.abs(p.x - v.x) <= 460) {
+    SFX.click();
+    villagerTalk(AMI_GUIDE2_SCRIPT).then(() => {
+      completeObjective();
+      AMI_FRAG_X.forEach((x, i) => { if (!amiFragTaken.ami[i]) items.push({ kind: 'frag', x, taken: false, counted: false, fromX: x, mapKey: 'ami', idx: i }); });
+    });
+    return;
+  }
+  if (v && v.key === 'guide' && isActive('guide3') && Math.abs(p.x - v.x) <= 460) {
+    SFX.click();
+    villagerTalk(AMI_GUIDE3_SCRIPT).then(async () => {
+      await runPuzzleGame();
+      await new Promise(resolve => { vnPrepare([...AMI_END_SCRIPT, { type: 'villagerDone', resolve }]); runStep(); });
+      screens.forEach(s => s.classList.toggle('active', s.id === 'field'));
+      mode = 'field'; updateTouch(); lastTs = performance.now(); if (!raf) raf = requestAnimationFrame(loop);
+      completeObjective();
+    });
+    return;
+  }
+  if (v && v.key === 'granny' && isActive('granny') && Math.abs(p.x - v.x) <= 460) {
+    SFX.click();
+    villagerTalk(AMI_GRANNY_SCRIPT).then(() => {
+      items.push({ kind: 'bucket', x: BUCKET_LOST_X, taken: false, counted: false, fromX: BUCKET_LOST_X });
+      completeObjective();
+    });
+    return;
+  }
+  if (v && v.key === 'deoksam' && isActive('deoksam2') && Math.abs(p.x - v.x) <= 460) {
+    SFX.click();
+    villagerTalk(AMI_DEOKSAM2_SCRIPT).then(() => completeObjective());
+    return;
+  }
+  if (v && Math.abs(p.x - v.x) <= 460) { SFX.click(); villagerTalk(VILLAGER_TALK[v.talk]); return; }
+  if (v) { SFX.blocked(); floats.push({ x: p.x, y: groundAt(p.x) - 262, txt: '조금 더 가까이 가 보자', t: 0, life: 1.3 }); return; }
+  if (isActive('npc') && npc && hitNPC(e)) { tryTalk('npc') && SFX.click(); }
+  else if (isActive('tv') && hitTV(e)) { tryTalk('tv') && SFX.tvOn(); }
+});
+function mgToast(wrap, txt, good) {              // 성공/실패 안내문이 잠시 떴다가 사라짐
+  const old = wrap.querySelector('.mgToast'); if (old) old.remove();
+  const el = document.createElement('div'); el.className = 'mgToast';
+  el.style.cssText = 'position:absolute;left:50%;bottom:100%;transform:translateX(-50%);margin-bottom:10px;white-space:nowrap;'
+    + `background:rgba(20,16,10,.88);border:2px solid ${good ? '#7fd07f' : '#e08a6a'};border-radius:10px;padding:6px 14px;`
+    + `color:${good ? '#d9f5d9' : '#ffe0d3'};font:700 15px "Noto Sans KR",sans-serif;text-shadow:0 1px 3px #000;`
+    + 'opacity:0;transition:opacity .2s ease,transform .2s ease;pointer-events:none;';
+  el.textContent = txt;
+  wrap.appendChild(el);
+  requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translateX(-50%) translateY(-4px)'; });
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 200); }, 900);
+}
+function runWellMinigame() {
+  return new Promise(resolve => {
+    const wrap = document.createElement('div');
+    wrap.id = 'mgWrap';
+    wrap.style.cssText = 'position:absolute;left:50%;bottom:120px;transform:translateX(-50%);width:420px;z-index:20;';
+    wrap.innerHTML = '<div style="position:relative;width:100%;height:34px;background:rgba(20,16,10,.78);border:2px solid #f0cf7a;border-radius:17px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.4);">'
+      + '<div id="mgZone" style="position:absolute;top:3px;bottom:3px;left:42%;width:16%;background:rgba(130,205,130,.6);border-radius:10px;"></div>'
+      + '<div id="mgMk" style="position:absolute;top:2px;width:22px;height:30px;background:#f0cf7a;border-radius:6px;box-shadow:0 0 8px rgba(0,0,0,.6);transition:transform .15s ease;"></div>'
+      + '</div><div id="mgHits" style="text-align:center;color:#f7ecc9;font:700 16px \'Noto Sans KR\',sans-serif;margin-top:8px;text-shadow:0 1px 3px #000;">0 / 3</div>';
+    document.getElementById('vn').appendChild(wrap);
+    const mk = wrap.querySelector('#mgMk'), hitsEl = wrap.querySelector('#mgHits');
+    const trackW = 420 - 4 - 22;
+    let hits = 0, raf2, t0 = performance.now(), stopped = false;
+    const period = 1300, zoneLo = 0.42, zoneHi = 0.58;
+    const posOf = t => { const f = ((t % period) / period); return f < 0.5 ? f * 2 : 2 - f * 2; };
+    const tick = () => { if (stopped) return; mk.style.left = (posOf(performance.now() - t0) * trackW) + 'px'; raf2 = requestAnimationFrame(tick); };
+    tick();
+    const onKey = e => {
+      if (e.code !== 'Space') return;
+      e.preventDefault();
+      const f = posOf(performance.now() - t0);
+      if (f >= zoneLo && f <= zoneHi) {
+        hits++; hitsEl.textContent = hits + ' / 3'; SFX.get('stone');
+        mk.style.transform = 'scale(1.35)'; setTimeout(() => { if (mk) mk.style.transform = 'scale(1)'; }, 150);
+        mgToast(wrap, '성공적으로 양동이를 당겼습니다!', true);
+        if (hits >= 3) { setTimeout(() => { cleanup(); resolve(); }, 500); }
+      } else {
+        SFX.blocked();
+        wrap.style.transition = 'transform .07s'; wrap.style.transform = 'translateX(-50%) translateX(-8px)';
+        setTimeout(() => { wrap.style.transform = 'translateX(-50%) translateX(8px)'; }, 70);
+        setTimeout(() => { wrap.style.transform = 'translateX(-50%)'; }, 140);
+        mgToast(wrap, '다시 스페이스바를 눌러 양동이를 당겨보세요!', false);
+      }
+    };
+    function cleanup() { stopped = true; cancelAnimationFrame(raf2); window.removeEventListener('keydown', onKey); wrap.remove(); }
+    window.addEventListener('keydown', onKey);
+  });
+}
+function openSpellModal() {
+  return new Promise(resolve => {
+    held.length = 0;
+    const wrap = document.createElement('div');
+    wrap.id = 'spellWrap';
+    wrap.style.cssText = 'position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:rgba(10,8,6,.6);';
+    wrap.innerHTML = `
+      <div style="width:640px;max-width:88%;background:rgba(26,20,14,.94);border:2px solid #f0cf7a;border-radius:18px;padding:28px 32px;box-shadow:0 10px 34px rgba(0,0,0,.55);">
+        <div style="color:#f7ecc9;font:700 19px 'Noto Sans KR',sans-serif;margin-bottom:14px;text-align:center;">위령비 앞에서 성불 주문을 외워보자</div>
+        <div style="color:#d8cbb0;font:500 14px 'Noto Sans KR',sans-serif;margin-bottom:10px;text-align:center;">아래 문장을 그대로 따라 입력하세요</div>
+        <div style="color:#f0cf7a;font:700 15px 'Noto Sans KR',sans-serif;background:rgba(0,0,0,.25);border-radius:10px;padding:10px 14px;margin-bottom:16px;text-align:center;line-height:1.5;">${SPELL_TEXT}</div>
+        <input id="spellInput" type="text" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:2px solid #8a7550;background:#fbf3df;color:#231a10;font:500 15px 'Noto Sans KR',sans-serif;outline:none;" placeholder="여기에 입력하세요" />
+        <div id="spellMsg" style="min-height:22px;color:#e08a6a;font:700 14px 'Noto Sans KR',sans-serif;text-align:center;margin-top:10px;"></div>
+        <div style="text-align:center;margin-top:12px;">
+          <button id="spellBtn" style="background:#f0cf7a;color:#241b10;border:none;border-radius:10px;padding:10px 26px;font:700 15px 'Noto Sans KR',sans-serif;cursor:pointer;">성불시키기</button>
+        </div>
+      </div>`;
+    (document.getElementById('stage') || document.body).appendChild(wrap);
+    const input = wrap.querySelector('#spellInput'), msg = wrap.querySelector('#spellMsg'), btn = wrap.querySelector('#spellBtn');
+    input.focus();
+    const submit = () => {
+      if (input.value.trim() === SPELL_TEXT) {
+        SFX.mission();
+        msg.style.color = '#9fe39f'; msg.textContent = '성불하였습니다…';
+        wrap.style.transition = 'opacity .5s ease'; wrap.style.opacity = '0';
+        setTimeout(() => { wrap.remove(); resolve(); }, 550);
+      } else {
+        SFX.blocked();
+        msg.textContent = '다시 성불 주문을 입력하세요';
+        input.style.borderColor = '#e08a6a';
+        wrap.style.transition = 'transform .07s'; wrap.style.transform = 'translateX(-8px)';
+        setTimeout(() => { wrap.style.transform = 'translateX(8px)'; }, 70);
+        setTimeout(() => { wrap.style.transform = 'translateX(0)'; input.style.borderColor = '#8a7550'; }, 140);
+      }
+    };
+    btn.addEventListener('click', submit);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); e.stopPropagation(); });
+  });
+}
+function runPuzzleGame() {
+  return new Promise(resolve => {
+    held.length = 0;
+    draw(true); fctx.drawImage(canvas, 0, 0);
+    missionEl.classList.remove('on');
+    frozen.classList.add('now');
+    setView('still');
+    screens.forEach(s => s.classList.toggle('active', s.id === 'vn'));
+    mode = 'vn'; updateTouch();
+    requestAnimationFrame(() => requestAnimationFrame(() => frozen.classList.remove('now')));
+
+    const W = 320, H = Math.round(W * 698 / 523), scale = W / 523;
+    const slots = [
+      { id: 1, x: 95, y: 55, w: 130, h: 110 },
+      { id: 2, x: 275, y: 55, w: 130, h: 110 },
+      { id: 3, x: 150, y: 185, w: 190, h: 155 },
+      { id: 4, x: 95, y: 355, w: 130, h: 110 },
+      { id: 5, x: 275, y: 355, w: 130, h: 110 },
+    ];
+    const wrap = document.createElement('div');
+    wrap.id = 'puzzleWrap';
+    wrap.style.cssText = 'position:absolute;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,8,6,.55);gap:18px;';
+    const title = document.createElement('div');
+    title.id = 'puzzleTitle';
+    title.style.cssText = 'color:#f7ecc9;font:700 18px "Noto Sans KR",sans-serif;text-shadow:0 1px 3px #000;';
+    title.textContent = '조각을 드래그해서 알맞은 자리에 맞춰보자';
+    wrap.appendChild(title);
+    const boardBox = document.createElement('div');
+    boardBox.id = 'puzzleBoard';
+    boardBox.style.cssText = `position:relative;width:${W}px;height:${H}px;`;
+    const boardImg = document.createElement('img');
+    boardImg.src = A.puzzle.board;
+    boardImg.style.cssText = `position:absolute;left:0;top:0;width:${W}px;height:${H}px;pointer-events:none;`;
+    boardBox.appendChild(boardImg);
+    wrap.appendChild(boardBox);
+    const tray = document.createElement('div');
+    tray.style.cssText = 'display:flex;gap:12px;flex-wrap:wrap;justify-content:center;max-width:90%;';
+    wrap.appendChild(tray);
+    document.getElementById('vn').appendChild(wrap);
+
+    let placed = 0;
+    const shuffled = [...slots].sort(() => Math.random() - 0.5);
+    shuffled.forEach(slot => {
+      const pImg = document.createElement('img');
+      pImg.src = A.puzzle.pieces[slot.id - 1];
+      pImg.dataset.id = slot.id;
+      pImg.style.cssText = 'width:58px;height:auto;cursor:grab;touch-action:none;filter:drop-shadow(0 3px 6px rgba(0,0,0,.55));user-select:none;';
+      tray.appendChild(pImg);
+      let dragging = false, offX = 0, offY = 0;
+      const onDown = e => {
+        dragging = true;
+        const r = pImg.getBoundingClientRect();
+        offX = e.clientX - r.left; offY = e.clientY - r.top;
+        document.body.appendChild(pImg);
+        pImg.style.position = 'fixed'; pImg.style.left = r.left + 'px'; pImg.style.top = r.top + 'px'; pImg.style.width = r.width + 'px'; pImg.style.zIndex = 999;
+        e.preventDefault();
+      };
+      const onMove = e => {
+        if (!dragging) return;
+        const pt = e.touches ? e.touches[0] : e;
+        pImg.style.left = (pt.clientX - offX) + 'px'; pImg.style.top = (pt.clientY - offY) + 'px';
+      };
+      const onUp = e => {
+        if (!dragging) return; dragging = false;
+        const pt = e.changedTouches ? e.changedTouches[0] : e;
+        const br = boardBox.getBoundingClientRect();
+        const cx = pt.clientX - br.left, cy = pt.clientY - br.top;
+        const tx = slot.x * scale, ty = slot.y * scale, tw = slot.w * scale, th = slot.h * scale;
+        const within = cx >= tx - 24 && cx <= tx + tw + 24 && cy >= ty - 24 && cy <= ty + th + 24;
+        if (within) {
+          boardBox.appendChild(pImg);
+          pImg.style.position = 'absolute'; pImg.style.left = tx + 'px'; pImg.style.top = ty + 'px'; pImg.style.width = tw + 'px'; pImg.style.height = th + 'px';
+          pImg.style.cursor = 'default'; pImg.style.filter = 'none'; pImg.style.transition = 'transform .18s ease';
+          pImg.style.transform = 'scale(1.12)'; setTimeout(() => { pImg.style.transform = 'scale(1)'; }, 180);
+          SFX.get('stone'); placed++;
+          if (placed >= 5) {
+            title.textContent = '복원이 완료되었습니다!';
+            setTimeout(() => { boardImg.src = A.puzzle.done; }, 250);
+            setTimeout(() => { wrap.style.transition = 'opacity .5s'; wrap.style.opacity = '0'; setTimeout(() => { wrap.remove(); resolve(); }, 520); }, 1400);
+          }
+        } else {
+          pImg.style.position = ''; pImg.style.left = ''; pImg.style.top = ''; pImg.style.width = '58px'; pImg.style.zIndex = '';
+          tray.appendChild(pImg);
+        }
+      };
+      pImg.addEventListener('mousedown', onDown);
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+      pImg.addEventListener('touchstart', onDown, { passive: false });
+      window.addEventListener('touchmove', onMove, { passive: false });
+      window.addEventListener('touchend', onUp);
+    });
+  });
+}
+async function startWellMinigame() {
+  if (mode !== 'field') return;
+  held.length = 0;
+  draw(true); fctx.drawImage(canvas, 0, 0);
+  frozen.classList.add('now');
+  setView('photo'); photoEl.src = A.photos.wellBoy; photoBgEl.src = A.photos.wellBoy; SFX.photo();
+  bodyEl.textContent = ''; nameEl.textContent = ''; nextDlg.classList.remove('on'); vn.ready = false;
+  screens.forEach(s => s.classList.toggle('active', s.id === 'vn'));
+  mode = 'vn'; updateTouch();
+  requestAnimationFrame(() => requestAnimationFrame(() => frozen.classList.remove('now')));
+  await new Promise(resolve => {
+    vnPrepare([{ type: 'say', who: '안내', photo: 'wellBoy', segs: plain('스페이스바를 정확한 타이밍에 누르면 우물에서 물을 길을 수 있습니다.') }, { type: 'villagerDone', resolve }]);
+    runStep();
+  });
+  setMission('정확한 타이밍에 스페이스바를 눌러 우물에서 물을 깃자', true);
+  await runWellMinigame();
+  amiBucketReady = true;
+  await new Promise(resolve => { vnPrepare([...AMI_WELLDONE_SCRIPT, { type: 'villagerDone', resolve }]); runStep(); });
+  screens.forEach(s => s.classList.toggle('active', s.id === 'field'));
+  mode = 'field';
+  completeObjective();
+  updateTouch();
+  lastTs = performance.now();
+  if (!raf) raf = requestAnimationFrame(loop);
+}
+async function villagerTalk(lines) {          // 미션과 상관없이, 주민을 클릭하면 짧은 대화가 뜨고 제자리로 돌아옴
+  if (mode !== 'field' || !lines) return;
+  held.length = 0; hover.villager = null;
+  draw(true);
+  fctx.drawImage(canvas, 0, 0);
+  missionEl.classList.remove('on');
+  frozen.classList.add('now');
+  setView('still');
+  screens.forEach(s => s.classList.toggle('active', s.id === 'vn'));
+  mode = 'vn';
+  updateTouch();
+  requestAnimationFrame(() => requestAnimationFrame(() => frozen.classList.remove('now')));
+  await new Promise(resolve => {
+    vnPrepare([...lines, { type: 'villagerDone', resolve }]);
+    runStep();
+  });
+  screens.forEach(s => s.classList.toggle('active', s.id === 'field'));
+  mode = 'field';
+  if (obj.list.length) missionEl.classList.add('on');
+  updateTouch();
+  lastTs = performance.now();
+  if (!raf) raf = requestAnimationFrame(loop);
+}
+function beginTalk() {
+  hover.npc = hover.tv = false;
+  if (M === MAPS.hospital) hospState = { x: p.x, dir: p.dir, cam };   // 다음 조작 구간에서 이 자리부터 이어서
+  draw(true);                              // 조작 표시 없이 한 프레임을 그려서
+  fctx.drawImage(canvas, 0, 0);            // 대화 배경으로 고정
+  held.length = 0;
+  missionEl.classList.remove('on');
+  frozen.classList.add('now');
+  setView('still');
+  screens.forEach(s => s.classList.toggle('active', s.id === 'vn'));
+  mode = 'vn';
+  updateTouch();
+  requestAnimationFrame(() => requestAnimationFrame(() => frozen.classList.remove('now')));
+  vn.i++;
+  runStep();
+}
+
+/* ─────────── 터치 버튼 (모바일) ─────────── */
+const touchEl = $('#touch');
+let touchOn = matchMedia('(pointer: coarse)').matches;   // 데스크톱에서는 T 키로 미리보기
+function updateTouch() {
+  const on = touchOn && mode === 'field';
+  touchEl.classList.toggle('on', on);
+
+  if (!on) { touchEl.querySelectorAll('.down').forEach(b => b.classList.remove('down')); return; }
+  // 캐릭터가 서는 바닥선(GROUND) 아래쪽 공간에 맞춰 버튼 크기 결정 → 캐릭터를 가리지 않음
+  const r = stage.getBoundingClientRect(), k = r.height / VH;
+  const safeB = parseFloat(getComputedStyle(document.documentElement).paddingBottom) || 0;
+  const avail = window.innerHeight - safeB - 10 - (r.top + (GROUND + 14) * k);
+  touchEl.style.setProperty('--sz', clamp(Math.floor(avail), 46, 76) + 'px');
+}
+const TDIR = { left: -1, right: 1 };
+touchEl.querySelectorAll('.tbn').forEach(b => {
+  const k = b.dataset.k;
+  const down = e => {
+    e.preventDefault();
+    if (b.setPointerCapture) { try { b.setPointerCapture(e.pointerId); } catch (_) {} }
+    b.classList.add('down'); SFX.tap();
+    if (TDIR[k] !== undefined) { const i = held.indexOf(TDIR[k]); if (i >= 0) held.splice(i, 1); held.push(TDIR[k]); }
+    else if (k === 'jump') jumpReq = performance.now();
+    else if (k === 'pick') pickReq = performance.now();
+  };
+  const up = () => {
+    b.classList.remove('down');
+    if (TDIR[k] !== undefined) { const i = held.indexOf(TDIR[k]); if (i >= 0) held.splice(i, 1); }
+  };
+  b.addEventListener('pointerdown', down);
+  b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('lostpointercapture', up);
+});
+touchEl.addEventListener('contextmenu', e => e.preventDefault());
+
+/* ─────────── 키 입력 (e.code 사용: 한글 입력 상태에서도 동작) ─────────── */
+addEventListener('keydown', e => {
+  if (mode === 'credits' && e.code === 'Escape' && !busy) { busy = true; go('title').then(() => { busy = false; }); return; }
+  if (mode === 'vn') {
+    if (vn.view === 'quiz') { const n = parseInt(e.key, 10); if (n >= 1 && n <= 4 && vn.quizPick) vn.quizPick(n - 1); return; }
+    if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); if (!e.repeat) advance(); }
+    return;
+  }
+  if (mode !== 'field') return;
+  if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space'].includes(e.code)) e.preventDefault();
+  const now = performance.now();
+  if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+    const d = e.code === 'ArrowLeft' ? -1 : 1;
+    const i = held.indexOf(d); if (i >= 0) held.splice(i, 1); held.push(d);
+  } else if (e.code === 'Space') { if (!e.repeat) jumpReq = now; }
+  else if (e.code === 'KeyZ') { if (!e.repeat) pickReq = now; }
+  else if (e.code === 'KeyD') { if (!e.repeat) debug = !debug; }
+  else if (e.code === 'KeyT') { if (!e.repeat) { touchOn = !touchOn; updateTouch(); } }
+});
+addEventListener('keyup', e => {
+  if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') { const d = e.code === 'ArrowLeft' ? -1 : 1; const i = held.indexOf(d); if (i >= 0) held.splice(i, 1); }
+});
+addEventListener('blur', () => { held.length = 0; });
+
+window.__game = game;
+})();
+</script>
+</body>
+</html>
